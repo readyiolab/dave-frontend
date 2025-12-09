@@ -1,0 +1,257 @@
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Menu, X, ArrowRight, Search } from "lucide-react";
+
+const Navigation = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSearchVisible, setIsSearchVisible] = useState(false); // New state for search visibility
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Mock search function
+  const handleSearch = async (query) => {
+    if (!query.trim()) return;
+    
+    setIsLoading(true);
+    setTimeout(() => {
+      const mockResults = [
+        { id: 1, title: "About Freedom M&A", description: "Learn about our company and mission in mergers and acquisitions.", url: "/about" },
+        { id: 2, title: "Our Services", description: "Comprehensive M&A services and business consulting.", url: "/services" },
+        { id: 3, title: "Dave Marshall", description: "Meet our founder and lead consultant Dave Marshall.", url: "/dave" },
+        { id: 4, title: "Contact Us", description: "Get in touch with our team for consultation.", url: "/contact" },
+      ].filter(item => 
+        item.title.toLowerCase().includes(query.toLowerCase()) ||
+        item.description.toLowerCase().includes(query.toLowerCase())
+      );
+      setSearchResults(mockResults);
+      setIsLoading(false);
+    }, 800);
+  };
+
+  const navItems = [
+    { label: "About", href: "/about" },
+    { label: "Services", href: "/services" },
+    { label: "Dave Marshall", href: "/dave" },
+    { label: "Contact", href: "/contact" },
+  ];
+
+  const handleNavClick = (e, href) => {
+    e.preventDefault();
+    setIsOpen(false);
+    console.log("Navigating to:", href);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    handleSearch(searchQuery);
+  };
+
+  return (
+    <>
+      <nav
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          isScrolled
+            ? "bg-white backdrop-blur-lg shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1)]"
+            : "bg-transparent"
+        }`}
+      >
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 sm:h-20">
+            {/* Logo */}
+            <div className="flex items-center">
+              <a href="/" onClick={(e) => handleNavClick(e, "/")}>
+                <img
+                  src="/lovable-uploads/a788d54f-9dd7-463b-8d6f-3d1ad45a6ade.webp"
+                  alt="Freedom M&A"
+                  className="h-10 sm:h-12 w-auto"
+                />
+              </a>
+            </div>
+
+            {/* Desktop Navigation */}
+            <div className="hidden lg:flex items-center space-x-6 xl:space-x-8">
+              {navItems.map((item) => (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  onClick={(e) => handleNavClick(e, item.href)}
+                  className={`font-medium transition-colors hover:text-primary ${
+                    isScrolled ? "text-foreground" : "text-white"
+                  }`}
+                >
+                  {item.label}
+                </a>
+              ))}
+            </div>
+
+            {/* Desktop Actions */}
+            <div className="hidden lg:flex items-center space-x-4">
+              <button
+                onClick={() => setIsSearchVisible(!isSearchVisible)}
+                className={`p-2 rounded-full transition-colors ${
+                  isScrolled 
+                    ? "text-gray-600 hover:text-[#be3144] hover:bg-gray-100" 
+                    : "text-white hover:text-gray-300 hover:bg-white/10"
+                }`}
+                aria-label="Search"
+              >
+                <Search className="w-5 h-5" />
+              </button>
+              <Button
+                className={`group transition-colors duration-300 ${
+                  isScrolled
+                    ? "bg-[#be3144] text-white hover:bg-[#a02738]"
+                    : "bg-transparent text-white border border-white hover:bg-[#be3144] hover:text-white hover:border-[#be3144]"
+                }`}
+              >
+                Get Started
+                <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </div>
+
+            {/* Mobile Actions */}
+            <div className="flex items-center space-x-2 lg:hidden">
+              <button
+                onClick={() => setIsSearchVisible(!isSearchVisible)}
+                className={`p-2 rounded-full transition-colors ${
+                  isScrolled 
+                    ? "text-gray-600 hover:text-[#be3144]" 
+                    : "text-white hover:text-gray-300"
+                }`}
+                aria-label="Search"
+              >
+                <Search className="w-5 h-5" />
+              </button>
+              <button 
+                onClick={() => setIsOpen(!isOpen)} 
+                className="p-2"
+                aria-label="Toggle menu"
+              >
+                {isOpen ? (
+                  <X
+                    className={`w-6 h-6 ${
+                      isScrolled ? "text-foreground" : "text-white"
+                    }`}
+                  />
+                ) : (
+                  <Menu
+                    className={`w-6 h-6 ${
+                      isScrolled ? "text-foreground" : "text-white"
+                    }`}
+                  />
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Mobile Navigation */}
+          {isOpen && (
+            <div className="lg:hidden absolute top-full left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
+              <div className="py-6 space-y-4">
+                {navItems.map((item) => (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    onClick={(e) => handleNavClick(e, item.href)}
+                    className="block px-6 py-2 text-foreground font-medium hover:text-[#be3144] transition-colors"
+                  >
+                    {item.label}
+                  </a>
+                ))}
+                <div className="px-6 pt-4">
+                  <Button className="w-full group bg-[#be3144] text-white hover:bg-[#a02738] transition-colors duration-300">
+                    Get Started
+                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Search Section */}
+        {isSearchVisible && (
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 bg-white shadow-md">
+            <div className="flex flex-col items-center">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Search Freedom M&A</h2>
+              <p className="text-gray-600 text-sm sm:text-base mb-4 text-center">
+                Find the solutions, insights, and services you need. Explore M&A expertise, 
+                business consulting, and professional guidance.
+              </p>
+              <form onSubmit={handleSearchSubmit} className="w-full max-w-lg mb-4">
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Type to start searching..."
+                    className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#be3144] focus:border-transparent text-base"
+                    autoFocus
+                  />
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-gray-800 text-white px-4 py-2 rounded-md hover:bg-gray-900 transition-colors disabled:opacity-50 text-sm font-medium"
+                  >
+                    {isLoading ? "..." : "Search"}
+                  </button>
+                </div>
+              </form>
+              <div className="w-full max-w-lg">
+                {isLoading && (
+                  <div className="text-center py-4">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#be3144] mx-auto"></div>
+                    <p className="mt-2 text-gray-600">Searching...</p>
+                  </div>
+                )}
+                {!isLoading && searchResults.length > 0 && (
+                  <div className="space-y-4">
+                    {searchResults.map((result) => (
+                      <div
+                        key={result.id}
+                        className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                        onClick={() => {
+                          console.log("Navigating to:", result.url);
+                          setIsSearchVisible(false);
+                        }}
+                      >
+                        <h3 className="font-semibold text-gray-900 mb-2">{result.title}</h3>
+                        <p className="text-gray-600 text-sm">{result.description}</p>
+                        <span className="text-xs text-[#be3144] mt-2 inline-block">{result.url}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {!isLoading && searchQuery && searchResults.length === 0 && (
+                  <div className="text-center py-4">
+                    <p className="text-gray-600">No results found for "{searchQuery}"</p>
+                    <p className="text-sm text-gray-500 mt-2">Try different keywords or browse our main sections.</p>
+                  </div>
+                )}
+                {!searchQuery && !isLoading && (
+                  <div className="text-center py-4">
+                    <Search className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500">Start typing to search our content</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </nav>
+    </>
+  );
+};
+
+export default Navigation;
