@@ -23,6 +23,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Star,
+  MailOpen,
+  PhoneCall,
 } from "lucide-react";
 import HeroSection from "./HeroSection";
 import AISearchSection from "./AISearchSection";
@@ -221,17 +223,22 @@ const Home = () => {
 
   return (
     <>
-      <HeroSection
-        title="Define Your Path to Ultimate Freedom"
-       subtitle="For over three decades, we've guided visionary founders through transitions, aligning their journey with personal and financial freedom."
-
-        ctaPrimary="Start Your Journey"
-        ctaSecondary="Learn Our Process"
-        backgroundImage="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"
-      />
+      <div id="hero">
+        <HeroSection
+          title="Define Your Path to Ultimate Freedom"
+          subtitle="For over three decades, we've guided visionary founders through transitions, aligning their journey with personal and financial freedom."
+          ctaPrimary="Start Your Journey"
+          ctaSecondary="Learn Our Process"
+          ctaPrimaryLink="#cta-section"
+          ctaSecondaryLink="#services"
+          backgroundImage="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"
+        />
+      </div>
 
       {/* AI Search Section */}
-      <AISearchSection/>
+      <div id="ai-assistant">
+        <AISearchSection />
+      </div>
       {/* <section className="py-16 md:py-24 bg-white text-center">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto">
@@ -338,7 +345,7 @@ const Home = () => {
 
       <main className="min-h-screen bg-[#d3d6db]">
         {/* Summary Section */}
-        <section className="py-16 md:py-24 bg-[#303841] text-white">
+        <section id="commitment" className="py-16 md:py-24 bg-[#303841] text-white">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-7xl mx-auto text-center">
               <div className="inline-flex items-center px-4 py-2 bg-[#be3144]/20 rounded-full text-[#be3144] font-medium text-sm mb-6">
@@ -462,16 +469,7 @@ const Home = () => {
                       </div>
                     ))}
                   </div>
-                  <button
-                    className="group bg-gradient-to-r from-[#be3144] to-[#e63950] text-white flex justify-center items-center hover:shadow-lg transition-all duration-300 py-3 px-6 rounded-lg font-medium transform hover:scale-105"
-                    aria-label="Learn More About Freedom M&A"
-                  >
-                    Learn More
-                    <ArrowRight
-                      className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"
-                      aria-hidden="true"
-                    />
-                  </button>
+                  
                 </div>
                 <div className="relative">
                   <img
@@ -491,7 +489,7 @@ const Home = () => {
         </section>
 
         {/* Services Section */}
-        <section className="py-16 md:py-24 bg-[#3a4750]">
+        <section id="services" className="py-16 md:py-24 bg-[#3a4750]">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-7xl mx-auto">
               <div className="text-center mb-12">
@@ -580,7 +578,7 @@ const Home = () => {
         </section>
 
         {/* Process Section */}
-        <section className="py-16 md:py-24 bg-[#d3d6db]">
+        <section id="process" className="py-16 md:py-24 bg-[#d3d6db]">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-7xl mx-auto">
               <div className="text-center mb-12">
@@ -713,16 +711,7 @@ const Home = () => {
                       </div>
                     ))}
                   </div>
-                  <button
-                    className="group bg-gradient-to-r from-[#be3144] to-[#e63950] text-white hover:shadow-lg flex justify-center items-center transition-all duration-300 py-3 px-6 rounded-lg font-medium transform hover:scale-105"
-                    aria-label="Learn About Dave's Journey"
-                  >
-                    Learn More
-                    <ArrowRight
-                      className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"
-                      aria-hidden="true"
-                    />
-                  </button>
+                  
                 </div>
               </div>
             </div>
@@ -786,7 +775,8 @@ const Home = () => {
                   </span>
                 </h2>
                 <p className="text-base sm:text-lg text-white/80 max-w-3xl mx-auto mt-4 leading-relaxed">
-                  Real stories from founders, equity partners, and debt firms who transformed their businesses with our guidance.
+                  Real stories from founders, equity partners, and debt firms
+                  who transformed their businesses with our guidance.
                 </p>
               </div>
 
@@ -858,7 +848,10 @@ const Home = () => {
                     className="group p-2 md:p-3 rounded-full bg-[#be3144] hover:bg-[#e63950] text-white transition-all duration-300 transform hover:scale-110 disabled:opacity-50"
                     aria-label="Previous testimonial"
                   >
-                    <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" aria-hidden="true" />
+                    <ChevronLeft
+                      className="w-5 h-5 md:w-6 md:h-6"
+                      aria-hidden="true"
+                    />
                   </button>
 
                   {/* Dots Indicator */}
@@ -887,13 +880,18 @@ const Home = () => {
                     className="group p-2 md:p-3 rounded-full bg-[#be3144] hover:bg-[#e63950] text-white transition-all duration-300 transform hover:scale-110 disabled:opacity-50"
                     aria-label="Next testimonial"
                   >
-                    <ChevronRight className="w-5 h-5 md:w-6 md:h-6" aria-hidden="true" />
+                    <ChevronRight
+                      className="w-5 h-5 md:w-6 md:h-6"
+                      aria-hidden="true"
+                    />
                   </button>
                 </div>
 
                 {/* Testimonial Counter */}
                 <div className="text-center mt-6 text-white/60 text-sm">
-                  <span className="font-semibold text-[#be3144]">{currentTestimonial + 1}</span>
+                  <span className="font-semibold text-[#be3144]">
+                    {currentTestimonial + 1}
+                  </span>
                   <span> / {testimonials.length}</span>
                 </div>
               </div>
@@ -902,7 +900,7 @@ const Home = () => {
         </section>
 
         {/* CTA Section */}
-        <section className="py-16 md:py-24 bg-gradient-to-r from-[#be3144] to-[#e63950] relative">
+        <section id="cta-section" className="py-16 md:py-24 bg-gradient-to-r from-[#be3144] to-[#e63950] relative">
           <div
             className="absolute inset-0 bg-black/10"
             aria-hidden="true"
@@ -917,32 +915,42 @@ const Home = () => {
                 Freedom M&A. Take the first step toward personal and financial
                 freedom today.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button
-                  className="group bg-white text-[#303841] hover:bg-[#d3d6db] font-semibold text-base py-3 px-6 rounded-lg shadow-md transition-all duration-300 transform hover:scale-105"
-                  aria-label="Schedule Consultation"
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <a
+                  href="https://calendly.com/dave-freedommergers/30min"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex"
                 >
-                  <Calendar
-                    className="w-4 h-4 mr-2 inline"
-                    aria-hidden="true"
-                  />
-                  Schedule Consultation
-                  <ArrowRight
-                    className="w-4 h-4 ml-2 inline group-hover:translate-x-1 transition-transform"
-                    aria-hidden="true"
-                  />
-                </button>
-                <button
-                  className="group border-2 border-white text-white hover:bg-white hover:text-[#303841] font-semibold text-base py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105"
-                  aria-label="Download Our Guide"
+                  <button
+                    className="group inline-flex items-center justify-center
+      bg-white text-[#303841] hover:bg-[#d3d6db]
+      font-semibold text-base py-3 px-6 rounded-lg shadow-md
+      transition-all duration-300 transform hover:scale-105"
+                    aria-label="Schedule Consultation"
+                  >
+                    <Calendar className="w-4 h-4 mr-2" aria-hidden="true" />
+                    Schedule Consultation
+                    <ArrowRight
+                      className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1"
+                      aria-hidden="true"
+                    />
+                  </button>
+                </a>
+
+                <a
+                  href="/contact"
+                  className="group inline-flex items-center justify-center
+    border-2 border-white text-white hover:bg-white hover:text-[#303841]
+    font-semibold text-base py-3 px-6 rounded-lg
+    transition-all duration-300 transform hover:scale-105"
+                  aria-label="Contact Us"
                 >
-                  <Download
-                    className="w-4 h-4 mr-2 inline"
-                    aria-hidden="true"
-                  />
-                  Download Our Guide
-                </button>
+                  <PhoneCall className="w-4 h-4 mr-2" aria-hidden="true" />
+                  Contact Us
+                </a>
               </div>
+
               <div className="mt-8 pt-6 border-t border-white/20 text-center">
                 <p className="text-white/80 text-sm">
                   180-day exclusive contracts • Success-based fee structure •

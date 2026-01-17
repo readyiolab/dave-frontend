@@ -2,8 +2,22 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { GraduationCap, Building2, Heart, Award, Users, TrendingUp, ArrowRight } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 
 const DaveMarshallSection = () => {
+  const navigate = useNavigate();
+
+  const handleConnectWithDave = () => {
+    window.open('https://calendly.com/dave-freedommergers/30min', '_blank', 'noopener,noreferrer');
+  };
+
+  const handleScheduleConsultation = () => {
+    window.open('https://calendly.com/dave-freedommergers/30min', '_blank', 'noopener,noreferrer');
+  };
+
+  const handleDownloadGuide = () => {
+    alert('Guide download will be available soon. Please contact us for more information.');
+  };
   const achievements = [
     {
       icon: GraduationCap,
@@ -77,7 +91,7 @@ const DaveMarshallSection = () => {
     <section className="py-16 sm:py-20 lg:py-28 bg-[#d3d6db]/30 overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6 lg:px-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-20 items-center">
-          <div className="space-y-6 sm:space-y-8 lg:space-y-10 fade-in-up">
+          <div id="about" className="space-y-6 sm:space-y-8 lg:space-y-10 fade-in-up">
             <div className="inline-flex items-center gap-2 sm:gap-3 bg-gradient-to-r from-[#be3144] to-[#e63950] text-white px-4 py-2 sm:px-5 sm:py-3 rounded-full text-sm sm:text-base font-semibold shadow-md transform hover:scale-105 transition-transform duration-300">
               <Users className="w-4 h-4 sm:w-5 sm:h-5" />
               Founder | Visionary | Builder of Legacies
@@ -111,6 +125,7 @@ const DaveMarshallSection = () => {
               </cite>
             </div>
             <Button
+              onClick={handleConnectWithDave}
               variant="premium"
               size="lg"
               className="group bg-gradient-to-r from-[#be3144] to-[#e63950] text-white hover:bg-[#be3144] transition-colors duration-300 text-base sm:text-lg lg:text-xl py-3 sm:py-4 px-6 sm:px-8 rounded-xl shadow-md w-full sm:w-auto transform hover:scale-105"
@@ -158,7 +173,7 @@ const DaveMarshallSection = () => {
           </div>
         </div>
 
-        <div className="mt-12 sm:mt-16 lg:mt-24 bg-gradient-to-r from-[#be3144]/10 to-[#e63950]/10 rounded-3xl p-8 sm:p-12 lg:p-16 fade-in-up stagger-3 shadow-lg">
+        <div id="philosophy" className="mt-12 sm:mt-16 lg:mt-24 bg-gradient-to-r from-[#be3144]/10 to-[#e63950]/10 rounded-3xl p-8 sm:p-12 lg:p-16 fade-in-up stagger-3 shadow-lg">
           <div className="max-w-5xl mx-auto text-center">
             <h3 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#303841] mb-6 sm:mb-8 lg:mb-10">
               Dave's Philosophy
@@ -220,6 +235,7 @@ const DaveMarshallSection = () => {
               </p>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
                 <Button
+                  onClick={handleScheduleConsultation}
                   className="group bg-white text-[#303841] hover:bg-[#d3d6db] font-bold text-sm sm:text-base py-2 sm:py-3 px-4 sm:px-6 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300"
                   aria-label="Schedule a consultation with Dave"
                 >
@@ -227,6 +243,7 @@ const DaveMarshallSection = () => {
                   <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
                 <Button
+                  onClick={handleDownloadGuide}
                   variant="outline"
                   className="group bg-transparent border-2 border-white text-white hover:bg-white hover:text-[#303841] font-bold text-sm sm:text-base py-2 sm:py-3 px-4 sm:px-6 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300"
                   aria-label="Download our guide"

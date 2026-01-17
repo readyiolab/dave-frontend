@@ -27,12 +27,7 @@ export default function Header({ setIsSidebarOpen, isSidebarOpen, activeMenu }) 
       </div>
       
       <div className="flex items-center space-x-3">
-        <div className="flex items-center space-x-2 bg-gray-50 rounded-lg px-2 py-1 sm:px-3 sm:py-2 text-sm">
-          <User className="w-4 h-4 text-gray-500" />
-          <span className="text-gray-700 font-medium truncate max-w-[100px] sm:max-w-[150px]">
-            {user?.username}
-          </span>
-        </div>
+       
         <Button
           variant="outline"
           className="border-gray-300 text-gray-700 hover:bg-red-50 hover:border-red-300 hover:text-red-700 flex items-center space-x-2 text-sm transition-all duration-200 px-2 sm:px-4"

@@ -28,7 +28,7 @@ const SearchResults = () => {
     "title": "Home - Define Your Path to Ultimate Freedom",
     "description": "Guiding visionary founders through transformative transitions for over three decades.",
     "content": "Define your path to ultimate freedom. For over 30 years, Freedom M&A has guided visionary founders through transformative transitions, aligning personal and financial goals for a secure, confident, and successful future journey.",
-    "url": "/",
+    "url": "/#hero",
     "type": "Section"
   },
   {
@@ -36,7 +36,7 @@ const SearchResults = () => {
     "title": "Home - Explore Freedom M&A AI",
     "description": "Helping $75M–$150M founders achieve seamless valuations, mergers, and sales.",
     "content": "Explore Freedom M&A AI. With 35+ years and 500+ deals, we help $75M–$150M founders achieve seamless valuations, sales, and mergers, answering questions on selling, valuation, costs, and maximizing value effortlessly.",
-    "url": "/",
+    "url": "/#ai-assistant",
     "type": "Section"
   },
   {
@@ -44,7 +44,7 @@ const SearchResults = () => {
     "title": "Home - Why Freedom M&A?",
     "description": "Your trusted partner in transformation for $75M–$150M businesses.",
     "content": "Why Freedom M&A? Trusted partner for $75M–$150M founders in high-stakes transitions. Led by Dave Marshall, 35+ years’ experience, nationwide reach, transparent results-driven approach ensures freedom journey. Clients praise unmatched expertise.",
-    "url": "/",
+    "url": "/#process",
     "type": "Section"
   },
   {
@@ -52,7 +52,7 @@ const SearchResults = () => {
     "title": "Home - Our Services Overview",
     "description": "Tailored solutions including valuations, enterprise sales, mergers, and turnarounds.",
     "content": "Our services include expert valuations, enterprise sales, mergers, and turnaround strategies. We deliver customized solutions tailored to unique business needs, ensuring growth, recovery, and maximum value creation through proven experience.",
-    "url": "/",
+    "url": "/#services",
     "type": "Section"
   },
   {
@@ -60,7 +60,7 @@ const SearchResults = () => {
     "title": "Home - Our Commitment",
     "description": "100% success rate with over 500 deals completed.",
     "content": "Our commitment: 100% success rate, over 500 deals, 180-day exclusive contracts. A client-centric approach ensures transformational outcomes, transparency, and proven results in every partnership for lasting business success.",
-    "url": "/",
+    "url": "/#commitment",
     "type": "Section"
   },
   {
@@ -68,7 +68,7 @@ const SearchResults = () => {
     "title": "About - Legacy of Freedom",
     "description": "Trusted partner to founders for over 30 years specializing in high-stakes transitions.",
     "content": "For 30+ years, Freedom M&A has been a trusted advisor to U.S. founders in high-stakes transitions, crafting bespoke strategies for independence, financial growth, and defining freedom with long-lasting impact.",
-    "url": "/about",
+    "url": "/about#hero",
     "type": "Section"
   },
   {
@@ -76,7 +76,7 @@ const SearchResults = () => {
     "title": "About - Defining Your Freedom",
     "description": "Understanding your unique vision of freedom for a tailored transition.",
     "content": "Freedom is unique. Whether stepping away or staying engaged, our co-created roadmap prioritizes vision, family, and values. We empower founders to transition authentically, designing next chapters aligned with personal goals.",
-    "url": "/about",
+    "url": "/about#philosophy",
     "type": "Section"
   },
   {
@@ -84,7 +84,7 @@ const SearchResults = () => {
     "title": "About - Our Approach",
     "description": "Mission-driven, transparent, and results-focused approach to transitions.",
     "content": "Our mission-driven approach aligns every transaction with personal freedom goals. Transparency and trust define our process, with empathy, care, and success-based fees ensuring maximum value and meaningful client outcomes.",
-    "url": "/about",
+    "url": "/about#approach",
     "type": "Section"
   },
   {
@@ -92,7 +92,7 @@ const SearchResults = () => {
     "title": "About - Our Track Record",
     "description": "Over 500 successful transitions with 95% client satisfaction.",
     "content": "Our proven track record: 500+ successful transitions, 95% client satisfaction, exclusive 180-day contracts. We serve $75M–$150M businesses nationwide, delivering measurable results that build trust and long-term partnerships.",
-    "url": "/about",
+    "url": "/about#track-record",
     "type": "Section"
   },
   {
@@ -100,7 +100,7 @@ const SearchResults = () => {
     "title": "Services - Expert Valuations",
     "description": "Precise market valuations and strategic options tailored to your goals.",
     "content": "We deliver expert valuations, tailored strategies, detailed reports, and in-depth market analysis. From recapitalizations to debt refinancing, we align your goals with the best options for measurable success.",
-    "url": "/services",
+    "url": "/services#expert-valuations",
     "type": "Service"
   },
   {
@@ -108,7 +108,7 @@ const SearchResults = () => {
     "title": "Services - Majority Enterprise Sales",
     "description": "Confidential process to maximize your business’s value.",
     "content": "We manage enterprise sales with confidentiality, expertise, and precision. Our comprehensive exit strategies maximize value, ensuring smooth, discreet processes that protect founder interests and deliver rewarding outcomes.",
-    "url": "/services",
+    "url": "/services#majority-enterprise-sales",
     "type": "Service"
   },
   {
@@ -116,7 +116,7 @@ const SearchResults = () => {
     "title": "Services - Minority Recapitalizations",
     "description": "Access liquidity while retaining control and equity upside.",
     "content": "Minority recapitalizations provide liquidity while retaining control and equity upside. We align financial structures with your long-term vision, ensuring flexibility, operational influence, and sustainable business growth opportunities.",
-    "url": "/services",
+    "url": "/services#minority-recapitalizations",
     "type": "Service"
   },
   {
@@ -124,7 +124,7 @@ const SearchResults = () => {
     "title": "Services - Synergistic Mergers",
     "description": "Forge partnerships with complementary businesses for mutual growth.",
     "content": "We create synergistic mergers by forging partnerships with complementary businesses. With strategic fit and win-win deal structures, we foster long-term collaboration, driving mutual growth, innovation, and measurable results.",
-    "url": "/services",
+    "url": "/services#synergistic-mergers",
     "type": "Service"
   },
   {
@@ -132,7 +132,7 @@ const SearchResults = () => {
     "title": "Services - Senior Debt Restructure",
     "description": "Optimize debt structure for financial flexibility and growth.",
     "content": "Our senior debt restructure solutions optimize financial structures, improving flexibility and enabling strategic growth. We deliver debt optimization strategies that reduce burdens and unlock sustainable opportunities for expansion.",
-    "url": "/services",
+    "url": "/services#senior-debt-restructure",
     "type": "Service"
   },
   {
@@ -140,7 +140,7 @@ const SearchResults = () => {
     "title": "Services - Short-Term Finance Facilities",
     "description": "Secure urgent capital through bridge financing.",
     "content": "We provide short-term finance facilities, securing urgent capital through rapid bridge financing. These solutions ensure business continuity, enabling transformation, stability, and immediate access to funds when needed most.",
-    "url": "/services",
+    "url": "/services#short-term-finance-facilities",
     "type": "Service"
   },
   {
@@ -148,7 +148,7 @@ const SearchResults = () => {
     "title": "Services - Distressed & Turnaround",
     "description": "Stability and recovery plans for businesses facing challenges.",
     "content": "Our distressed and turnaround strategies provide stability, crisis management expertise, and recovery planning. We deliver clear paths to stabilization, ensuring businesses overcome challenges and regain strength for sustainable success.",
-    "url": "/services",
+    "url": "/services#distressed-and-turnaround",
     "type": "Service"
   },
   {
@@ -156,7 +156,7 @@ const SearchResults = () => {
     "title": "Services - Our Process",
     "description": "Hands-on process from discovery to execution for transformative results.",
     "content": "Our process spans discovery, strategy, and execution. We co-create tailored plans, refine narratives, and execute with precision, ensuring confidence and clarity throughout the journey. Clients feel supported every step.",
-    "url": "/services",
+    "url": "/services#process",
     "type": "Section"
   },
   {
@@ -164,7 +164,7 @@ const SearchResults = () => {
     "title": "Dave Marshall - About",
     "description": "Dave Marshall, a trusted advisor with 35+ years of experience.",
     "content": "Meet Dave Marshall, the visionary behind Freedom M&A. With 35+ years’ experience, he guides founders through complex transitions, building legacies with empathy, precision, and unwavering commitment to authentic success.",
-    "url": "/dave",
+    "url": "/dave#about",
     "type": "Section"
   },
   {
@@ -172,7 +172,7 @@ const SearchResults = () => {
     "title": "Dave Marshall - Philosophy",
     "description": "Guided, thoughtful approach to align with your vision of freedom.",
     "content": "Dave Marshall’s philosophy emphasizes guided, thoughtful, unhurried advice. He challenges assumptions, aligning decisions with founder visions. With 80% returning clients, his approach builds trust, legacy, and long-term partnerships nationwide.",
-    "url": "/dave",
+    "url": "/dave#philosophy",
     "type": "Section"
   },
   {
@@ -180,7 +180,7 @@ const SearchResults = () => {
     "title": "Contact Us - Get in Touch",
     "description": "Schedule a confidential consultation to explore your path to freedom.",
     "content": "Contact Freedom M&A for a confidential consultation. Our team helps define goals, create tailored plans, and ensure trusted outcomes. Email, call, or visit us to start your transformative journey today.",
-    "url": "/contact",
+    "url": "/contact#contact-form",
     "type": "Section"
   }
 ];

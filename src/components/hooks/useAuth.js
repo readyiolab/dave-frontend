@@ -11,9 +11,11 @@ export function useAuth() {
   // Initialize from localStorage
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
+    const storedUser = localStorage.getItem('user');
     if (token) {
       api.setAuthToken(token);
-      dispatch(login({ accessToken: token, user: null }));
+      const userData = storedUser ? JSON.parse(storedUser) : null;
+      dispatch(login({ accessToken: token, user: userData }));
     }
   }, [dispatch]);
 
@@ -21,12 +23,12 @@ export function useAuth() {
   async function handleLogin(credentials) {
     setLoading(true);
     try {
-      const response = await api.post('/auth/login', credentials); // ✅ removed _csrf
+      const response = await api.post('/auth/login', credentials);
       const { accessToken, user } = response.data;
       localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('user', JSON.stringify(user));
       api.setAuthToken(accessToken);
       dispatch(login({ accessToken, user }));
-      await logAdminAction('login', { email: credentials.email });
     } catch (err) {
       throw new Error(err.response?.data?.error || 'Login failed');
     } finally {
@@ -37,7 +39,7 @@ export function useAuth() {
   // --- REFRESH TOKEN ---
   async function handleRefreshToken() {
     try {
-      const response = await api.post('/auth/refresh-token'); // ✅ no _csrf
+      const response = await api.post('/auth/refresh-token');
       const { accessToken } = response.data;
       localStorage.setItem('accessToken', accessToken);
       api.setAuthToken(accessToken);
@@ -49,19 +51,10 @@ export function useAuth() {
 
   // --- LOGOUT ---
   async function handleLogout() {
-    try {
-      await logAdminAction('logout', { userId: user?.id });
-    } catch (err) {
-      console.error('Logout audit log failed:', err);
-    }
     localStorage.removeItem('accessToken');
+    localStorage.removeItem('user');
     api.setAuthToken(null);
     dispatch(logout());
-  }
-
-  // --- AUDIT LOG ---
-  async function logAdminAction(action, metadata) {
-    await api.post('/admin/audit', { action, metadata }); // ✅ removed _csrf
   }
 
   return {
@@ -74,3 +67,4 @@ export function useAuth() {
     handleLogout
   };
 }
+

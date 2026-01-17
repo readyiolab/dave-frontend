@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { api } from '../lib/api';
 
 const AISearchSection = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -8,12 +9,12 @@ const AISearchSection = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Updated dummy responses with markdown-like formatting
-  const dummyResponses = {
-    "How can Freedom M&A help me sell my company?": `Freedom M&A provides comprehensive support for selling your company through the following services:\n\n1. **Business Valuation**: We analyze your company's financials, market position, and growth potential using industry-standard methods like DCF and comparables.\n2. **Due Diligence**: Our team ensures all documentation and processes meet buyer expectations, streamlining the sale process.\n3. **Strategic Buyer Outreach**: We identify and engage potential buyers to maximize your company's value.\n\nInterested in working with us? Schedule a Free Consultation Here: https://calendly.com/dave-freedommergers`,
-    "What is the valuation process?": `Our valuation process is thorough and tailored to your business:\n\n1. **Financial Analysis**: We review your financial statements to assess revenue, profit, and cash flow trends.\n2. **Market Positioning**: We evaluate your industry standing and competitive advantages.\n3. **Valuation Methods**: We apply methods like Discounted Cash Flow (DCF) and comparable company analysis to determine fair value.\n\nInterested in working with us? Schedule a Free Consultation Here: https://calendly.com/dave-freedommergers`,
-    "What are the costs involved?": `Costs are customized based on your needs:\n\n1. **Transparent Pricing**: We provide clear, upfront pricing tailored to the complexity of your transaction.\n2. **Flexible Services**: Costs vary depending on whether you need valuation, due diligence, or full M&A support.\n3. **No Hidden Fees**: We ensure all costs are discussed upfront to avoid surprises.\n\nInterested in working with us? Schedule a Free Consultation Here: https://calendly.com/dave-freedommergers`,
-  };
+  // Popular questions for quick search
+  const popularQuestions = [
+    "How can Freedom M&A help me sell my company?",
+    "What is the valuation process?",
+    "What are the costs involved?"
+  ];
 
   // Typing effect
   useEffect(() => {
@@ -43,46 +44,52 @@ const AISearchSection = () => {
   };
 
   const preprocessResponse = (text) => {
+    // If already has numbered sections with bold formatting, keep as is
     if (/\d+\.\s*\*\*[^*]+\*\*:/.test(text)) {
       return text;
     }
-    return `1. **Overview**: ${text}`;
+    
+    // Try to detect and format key sections in the response
+    // Look for sentences that could be section headers
+    const sentences = text.split(/(?<=[.!?])\s+/);
+    
+    if (sentences.length >= 3) {
+      // Format as a clean response with proper structure
+      return text;
+    }
+    
+    return text;
   };
 
   const handleSearchSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!searchQuery.trim()) {
+      setError('Please enter a search query');
+      return;
+    }
+    
     setIsLoading(true);
     setError('');
     setSearchResponse('');
     setDisplayedResponse('');
 
     try {
-      // Simulating API call with dummy data
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await api.post('/ai-chat/search', { query: searchQuery });
       
-      const response = dummyResponses[searchQuery] || 
-        `Thank you for your question. For detailed information about "${searchQuery}", please contact us at info@freedommergers.com or schedule a consultation at https://calendly.com/dave-freedommergers`;
-      
-      const formattedResponse = preprocessResponse(response);
-      setSearchResponse(formattedResponse);
-      
-      // Uncomment below for real API call
-      /*
-      const response = await api.post('/ai-chat/ai-search', { query: searchQuery });
-      if (response.data.success) {
-        const formattedResponse = preprocessResponse(response.data.message);
+      if (response.data && (response.data.response || response.data.message)) {
+        const formattedResponse = preprocessResponse(response.data.response || response.data.message);
         setSearchResponse(formattedResponse);
+      } else if (response.data && response.data.error) {
+        setError(response.data.error);
       } else {
-        const errorMessage = response.data.details
-          ? response.data.details.join('. ') + '. For assistance, contact us at info@freedommergers.com or schedule a consultation at https://calendly.com/dave-freedommergers.'
-          : response.data.message || response.data.error || 'Something went wrong. Please try again.';
-        setError(errorMessage);
+        setError('Unexpected response from server. Please try again.');
       }
-      */
     } catch (err) {
-      setError(
-        'Failed to fetch response. For assistance, contact us at info@freedommergers.com or schedule a consultation at https://calendly.com/dave-freedommergers.'
-      );
+      console.error('AI Search error:', err);
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || 
+        'Failed to fetch response. For assistance, contact us at info@freedommergers.com or schedule a consultation at https://calendly.com/dave-freedommergers/30min.';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -116,9 +123,14 @@ const AISearchSection = () => {
         }
       }
     } else {
+      // For plain text responses, format nicely with proper paragraph styling
       formattedSections.push(
-        <div key="content" className="text-gray-700">
-          {formatContent(text)}
+        <div key="content" className="text-gray-700 leading-relaxed text-base space-y-3">
+          {text.split('\n\n').map((paragraph, idx) => (
+            <p key={idx} className="mb-2">
+              {formatContent(paragraph.trim())}
+            </p>
+          ))}
         </div>
       );
     }
@@ -127,7 +139,10 @@ const AISearchSection = () => {
   };
 
   const formatContent = (content) => {
-    return content.split(/(info@freedommergers\.com|https:\/\/calendly\.com\/dave-freedommergers)/g).map((part, i) => {
+    // Regex to match emails and various Calendly URLs (handles paths with dots, hyphens, etc.)
+    const linkRegex = /(info@freedommergers\.com|https:\/\/calendly\.com\/[\w.\-\/]+)/g;
+    
+    return content.split(linkRegex).map((part, i) => {
       if (part === "info@freedommergers.com") {
         return (
           <a
@@ -139,7 +154,7 @@ const AISearchSection = () => {
           </a>
         );
       }
-      if (part === "https://calendly.com/dave-freedommergers") {
+      if (part && part.startsWith("https://calendly.com/")) {
         return (
           <a
             key={i}
@@ -157,9 +172,12 @@ const AISearchSection = () => {
   };
 
   const renderResponse = (text) => {
+    // Regex to match emails and various Calendly URLs (handles paths with dots, hyphens, etc.)
+    const linkRegex = /(info@freedommergers\.com|https:\/\/calendly\.com\/[\w.\-\/]+)/g;
+    
     return (
       <p className="text-gray-800 text-sm text-left">
-        {text.split(/(info@freedommergers\.com|https:\/\/calendly\.com\/dave-freedommergers)/g).map((part, i) => {
+        {text.split(linkRegex).map((part, i) => {
           if (part === "info@freedommergers.com") {
             return (
               <a
@@ -171,7 +189,7 @@ const AISearchSection = () => {
               </a>
             );
           }
-          if (part === "https://calendly.com/dave-freedommergers") {
+          if (part && part.startsWith("https://calendly.com/")) {
             return (
               <a
                 key={i}
@@ -272,19 +290,59 @@ const AISearchSection = () => {
               {isTyping && (
                 <span className="inline-block w-1 h-4 bg-[#be3144] ml-1 animate-pulse"></span>
               )}
+              {!isTyping && (
+                <div className="mt-6 pt-6 border-t border-gray-300">
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <p className="text-gray-700 font-medium">
+                      Ready to take the next step?
+                    </p>
+                    <a
+                      href="https://calendly.com/dave-freedommergers/30min"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center px-6 py-3 bg-[#be3144] text-white font-semibold rounded-lg hover:bg-red-700 transition-colors shadow-md hover:shadow-lg"
+                    >
+                      <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                      </svg>
+                      Schedule a Consultation
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
           <div className="mt-12">
             <h3 className="text-xl font-semibold text-gray-700 mb-6">Popular Questions</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {Object.keys(dummyResponses).map((suggestion, index) => (
+              {popularQuestions.map((suggestion, index) => (
                 <div
                   key={index}
                   className="bg-gray-50 border border-gray-200 p-4 rounded-lg shadow-sm hover:shadow-md hover:border-[#be3144] transition-all cursor-pointer group"
                   onClick={() => {
                     setSearchQuery(suggestion);
-                    setSearchResponse(dummyResponses[suggestion]);
+                    // Trigger search with the selected question
+                    setIsLoading(true);
+                    setError('');
+                    setSearchResponse('');
+                    setDisplayedResponse('');
+                    api.post('/ai-chat/search', { query: suggestion })
+                      .then((response) => {
+                        if (response.data && (response.data.response || response.data.message)) {
+                          const formattedResponse = preprocessResponse(response.data.response || response.data.message);
+                          setSearchResponse(formattedResponse);
+                        } else if (response.data && response.data.error) {
+                          setError(response.data.error);
+                        }
+                      })
+                      .catch((err) => {
+                        console.error('AI Search error:', err);
+                        setError(err.response?.data?.error || 'Failed to fetch response.');
+                      })
+                      .finally(() => {
+                        setIsLoading(false);
+                      });
                   }}
                 >
                   <div className="text-[#be3144] mb-3 group-hover:scale-110 transition-transform">

@@ -20,7 +20,7 @@ const Chatbot = () => {
   const [isLeadSubmitting, setIsLeadSubmitting] = useState(false);
   const scrollAreaRef = useRef(null);
 
-  const API_BASE_URL = "http://localhost:3000";
+  const API_BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:3000").replace(/\/api$/, '');
   const API_ENDPOINTS = {
     chat: `${API_BASE_URL}/api/ai-chat/chat`,
     search: `${API_BASE_URL}/api/ai-chat/search`,
@@ -29,7 +29,7 @@ const Chatbot = () => {
     feedback: `${API_BASE_URL}/api/ai-chat/feedback`,
     health: `${API_BASE_URL}/api/ai-chat/health`,
   };
-  const CALENDLY_LINK = "https://calendly.com/dave-freedommergers";
+  const CALENDLY_LINK = "https://calendly.com/dave-freedommergers/30min";
 
   // Generate session ID and handle proactive message
   useEffect(() => {
@@ -389,10 +389,90 @@ const Chatbot = () => {
     const content = message.content;
     const contactInfo = message.contactInfo;
 
+    // Function to format text with markdown-like formatting
+    const formatText = (text: string) => {
+      // Split by numbered list items (1. **Title**: content)
+      const listItemRegex = /(\d+\.\s*\*\*[^*]+\*\*:?)/g;
+      const hasNumberedList = listItemRegex.test(text);
+
+      if (hasNumberedList) {
+        const parts = text.split(/(\d+\.\s*\*\*[^*]+\*\*:?)/g);
+        return (
+          <div className="space-y-2">
+            {parts.map((part, idx) => {
+              // Check if this is a numbered header (e.g., "1. **Mergers and Acquisitions**:")
+              const headerMatch = part.match(/^(\d+)\.\s*\*\*([^*]+)\*\*:?$/);
+              if (headerMatch) {
+                return (
+                  <div key={idx} className="flex items-start gap-2 mt-3 first:mt-0">
+                    <span className="bg-white bg-opacity-30 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      {headerMatch[1]}
+                    </span>
+                    <span className="font-semibold">{headerMatch[2]}</span>
+                  </div>
+                );
+              }
+              // Regular content
+              if (part.trim()) {
+                return (
+                  <div key={idx} className="pl-7 text-sm opacity-90">
+                    {formatLinks(part.trim())}
+                  </div>
+                );
+              }
+              return null;
+            })}
+          </div>
+        );
+      }
+
+      // For regular text, just format links
+      return <span>{formatLinks(text)}</span>;
+    };
+
+    // Function to format links (Calendly, email, etc.)
+    const formatLinks = (text: string) => {
+      const urlRegex = /(https?:\/\/[^\s]+)/g;
+      const emailRegex = /([\w.-]+@[\w.-]+\.\w+)/g;
+
+      // First split by URLs
+      const parts = text.split(urlRegex);
+
+      return parts.map((part, index) => {
+        if (part.match(urlRegex)) {
+          return (
+            <button
+              key={index}
+              onClick={() => window.open(part, "_blank")}
+              className="text-black hover:text-white underline hover:no-underline mx-1 font-medium"
+            >
+              {part.includes("calendly") ? "📅 Schedule Consultation" : "🔗 View Link"}
+            </button>
+          );
+        }
+        // Check for email in the part
+        const emailParts = part.split(emailRegex);
+        return emailParts.map((emailPart, emailIndex) => {
+          if (emailPart.match(emailRegex)) {
+            return (
+              <button
+                key={`${index}-${emailIndex}`}
+                onClick={() => window.open(`mailto:${emailPart}`, "_blank")}
+                className="text-black  underline hover:no-underline mx-1 font-medium"
+              >
+                {emailPart}
+              </button>
+            );
+          }
+          return <span key={`${index}-${emailIndex}`}>{emailPart}</span>;
+        });
+      });
+    };
+
     if (contactInfo) {
       return (
         <div className="space-y-3">
-          <div className="leading-relaxed break-words">{content}</div>
+          <div className="leading-relaxed break-words">{formatText(content)}</div>
           <div className="flex flex-col gap-2 pt-2 border-t border-opacity-30">
             {contactInfo.emailLink && (
               <button
@@ -417,25 +497,9 @@ const Chatbot = () => {
       );
     }
 
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    const parts = content.split(urlRegex);
-
     return (
       <div className="leading-relaxed break-words">
-        {parts.map((part, index) => {
-          if (part.match(urlRegex)) {
-            return (
-              <button
-                key={index}
-                onClick={() => window.open(part, "_blank")}
-                className="text-blue-600 hover:text-blue-800 underline hover:no-underline mx-1"
-              >
-                {part.includes("calendly") ? "Schedule Consultation" : part.includes("mailto") ? "Send Email" : part}
-              </button>
-            );
-          }
-          return <span key={index}>{part}</span>;
-        })}
+        {formatText(content)}
       </div>
     );
   };
@@ -446,9 +510,8 @@ const Chatbot = () => {
         <div className="relative">
           <button
             onClick={toggleChat}
-            className={`rounded-full w-14 h-14 shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110 ${
-              apiError ? "bg-orange-500 hover:bg-orange-600" : "bg-[#be3144] hover:bg-[#a12b3b]"
-            }`}
+            className={`rounded-full w-14 h-14 shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110 ${apiError ? "bg-orange-500 hover:bg-orange-600" : "bg-[#be3144] hover:bg-[#a12b3b]"
+              }`}
             aria-label={isOpen ? "Close chatbot" : "Open chatbot"}
           >
             {isOpen ? <X className="w-6 h-6 text-white" /> : <MessageCircle className="w-6 h-6 text-white" />}
@@ -463,9 +526,8 @@ const Chatbot = () => {
 
       {isOpen && (
         <div
-          className={`fixed bottom-20 right-4 bg-[#d3d6db] border border-[#303841] rounded-2xl shadow-2xl transition-all duration-300 ease-in-out overflow-hidden z-[9998] ${
-            isMinimized ? "w-80 h-16" : "w-96 h-[500px]"
-          }`}
+          className={`fixed bottom-20 right-4 bg-[#d3d6db] border border-[#303841] rounded-2xl shadow-2xl transition-all duration-300 ease-in-out overflow-hidden z-[9998] ${isMinimized ? "w-80 h-16" : "w-96 h-[500px]"
+            }`}
         >
           <div className="flex-shrink-0 p-4 border-b bg-[#3a4750] rounded-t-2xl flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
@@ -474,9 +536,8 @@ const Chatbot = () => {
                   <Bot className="w-5 h-5 text-[#303841]" />
                 </div>
                 <div
-                  className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-[#d3d6db] ${
-                    apiError ? "bg-orange-400" : "bg-green-400"
-                  }`}
+                  className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-[#d3d6db] ${apiError ? "bg-orange-400" : "bg-green-400"
+                    }`}
                 ></div>
               </div>
               <div>
@@ -556,9 +617,8 @@ const Chatbot = () => {
                       <Button
                         onClick={handleLeadSubmit}
                         disabled={isLeadSubmitting}
-                        className={`bg-[#be3144] hover:bg-[#a12b3b] text-white flex-1 rounded-lg relative ${
-                          isLeadSubmitting ? "opacity-50 cursor-not-allowed" : ""
-                        }`}
+                        className={`bg-[#be3144] hover:bg-[#a12b3b] text-white flex-1 rounded-lg relative ${isLeadSubmitting ? "opacity-50 cursor-not-allowed" : ""
+                          }`}
                         aria-label="Submit contact information"
                       >
                         {isLeadSubmitting ? (
@@ -608,31 +668,28 @@ const Chatbot = () => {
                     {messages.map((message, index) => (
                       <div
                         key={index}
-                        className={`flex ${
-                          message.role === "user" ? "justify-end" : "justify-start"
-                        } animate-fade-in`}
+                        className={`flex ${message.role === "user" ? "justify-end" : "justify-start"
+                          } animate-fade-in`}
                       >
                         <div
-                          className={`max-w-[85%] rounded-2xl p-3 text-sm shadow-sm ${
-                            message.role === "user"
-                              ? "bg-[#be3144] text-white border border-[#be3144] mr-2"
-                              : message.isError
+                          className={`max-w-[85%] rounded-2xl p-3 text-sm shadow-sm ${message.role === "user"
+                            ? "bg-[#be3144] text-white border border-[#be3144] mr-2"
+                            : message.isError
                               ? "bg-red-100 text-red-800 border border-red-300 ml-2"
                               : message.isSuccess
-                              ? "bg-green-100 text-green-800 border border-green-300 ml-2"
-                              : "bg-[#d3d6db] text-[#303841] border border-[#303841] ml-2"
-                          } flex flex-col gap-1 transition-all duration-200 hover:shadow-md`}
+                                ? "bg-green-100 text-green-800 border border-green-300 ml-2"
+                                : "bg-[#d3d6db] text-[#303841] border border-[#303841] ml-2"
+                            } flex flex-col gap-1 transition-all duration-200 hover:shadow-md`}
                         >
                           <div className="flex items-start gap-2">
                             {message.role === "bot" && (
                               <Bot
-                                className={`w-4 h-4 mt-0.5 flex-shrink-0 ${
-                                  message.isError
-                                    ? "text-red-600"
-                                    : message.isSuccess
+                                className={`w-4 h-4 mt-0.5 flex-shrink-0 ${message.isError
+                                  ? "text-red-600"
+                                  : message.isSuccess
                                     ? "text-green-600"
                                     : "text-[#303841]"
-                                }`}
+                                  }`}
                               />
                             )}
                             <span className="leading-relaxed break-words flex-1">{renderMessageContent(message)}</span>
@@ -650,15 +707,14 @@ const Chatbot = () => {
                             </Button>
                           )}
                           <div
-                            className={`text-xs opacity-70 text-right ${
-                              message.role === "user"
-                                ? "text-[#d3d6db]"
-                                : message.isError
+                            className={`text-xs opacity-70 text-right ${message.role === "user"
+                              ? "text-[#d3d6db]"
+                              : message.isError
                                 ? "text-red-600"
                                 : message.isSuccess
-                                ? "text-green-600"
-                                : "text-[#3a4750]"
-                            }`}
+                                  ? "text-green-600"
+                                  : "text-[#3a4750]"
+                              }`}
                           >
                             {message.timestamp}
                             {message.responseTime && <span className="ml-2">({message.responseTime}ms)</span>}

@@ -9,8 +9,8 @@ const DaveMarshall = () => {
         subtitle="Dave Marshall is the heartbeat behind Freedom M&A, guiding founders with over 35 years of experience in transformative transitions."
         ctaPrimary="Connect with Dave"
         ctaSecondary="Explore Our Services"
-        ctaPrimaryLink="#contact"
-        ctaSecondaryLink="#services"
+        ctaPrimaryLink="/contact"
+        ctaSecondaryLink="/services"
       />
       <DaveMarshallSection />
     </div>

@@ -408,10 +408,12 @@ export default function BlogTable({ blogs, page, pageSize, total, setPage, onUpd
             <DialogTitle>Edit Blog Post</DialogTitle>
           </DialogHeader>
           <div className="p-0">
-            <BlogForm 
-              blog={selectedBlog} 
-              onClose={handleEditClose}
-            />
+            {selectedBlog && (
+              <BlogForm 
+                blog={selectedBlog} 
+                onClose={handleEditClose}
+              />
+            )}
           </div>
         </DialogContent>
       </Dialog>

@@ -3,15 +3,25 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../../components/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import LeadsTable from '../../components/admin/Leads/LeadsTable';
 import LeadDetails from '../../components/admin/Leads/LeadDetails';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { setSelectedLead } from '../../components/store/slices/leadsSlice';
 
 export default function LeadsPage() {
   const [page, setPage] = useState(1);
   const pageSize = 10;
   const { toast } = useToast();
+  const dispatch = useDispatch();
   const { selectedLead } = useSelector((state) => state.leads);
+
+  // Control sheet open state based on selectedLead
+  const isSheetOpen = selectedLead !== null;
+  
+  const handleCloseSheet = () => {
+    dispatch(setSelectedLead(null));
+  };
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['leads', page],
@@ -155,46 +165,52 @@ export default function LeadsPage() {
           <p className="text-sm sm:text-base text-gray-600 mt-1">View and manage your leads</p>
         </div>
         
-       
-
-        <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
-          <Card className="col-span-1 lg:col-span-2 shadow-sm border-gray-200">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold text-gray-900">All Leads</CardTitle>
-              <p className="text-sm text-gray-600">
-                Showing {((page - 1) * pageSize) + 1} to {Math.min(page * pageSize, total)} of {total} leads
-              </p>
-            </CardHeader>
-            <CardContent>
-              {leads.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No leads found</h3>
-                  <p className="text-gray-600">There are no leads to display at the moment.</p>
+        <Card className="shadow-sm border-gray-200">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold text-gray-900">All Leads</CardTitle>
+            <p className="text-sm text-gray-600">
+              Showing {((page - 1) * pageSize) + 1} to {Math.min(page * pageSize, total)} of {total} leads
+            </p>
+          </CardHeader>
+          <CardContent>
+            {leads.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
                 </div>
-              ) : (
-                <LeadsTable
-                  leads={leads}
-                  page={page}
-                  pageSize={pageSize}
-                  total={total}
-                  setPage={setPage}
-                />
-              )}
-            </CardContent>
-          </Card>
-          {selectedLead && (
-            <Card className="shadow-sm border-gray-200">
-              <CardContent className="p-0">
-                <LeadDetails />
-              </CardContent>
-            </Card>
-          )}
-        </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No leads found</h3>
+                <p className="text-gray-600">There are no leads to display at the moment.</p>
+              </div>
+            ) : (
+              <LeadsTable
+                leads={leads}
+                page={page}
+                pageSize={pageSize}
+                total={total}
+                setPage={setPage}
+              />
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Lead Details Sheet */}
+        <Sheet open={isSheetOpen} onOpenChange={(open) => !open && handleCloseSheet()}>
+          <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle className="text-xl font-bold text-gray-900">
+                Lead Details
+              </SheetTitle>
+              <SheetDescription>
+                {selectedLead?.name} - {selectedLead?.email}
+              </SheetDescription>
+            </SheetHeader>
+            <div className="mt-4">
+              <LeadDetails />
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
     </div>
   );

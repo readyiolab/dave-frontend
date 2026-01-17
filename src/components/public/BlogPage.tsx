@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Search,
   Calendar,
@@ -39,6 +39,7 @@ const staggerContainer = {
 };
 
 const BlogPage: React.FC = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
@@ -47,6 +48,24 @@ const BlogPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const postsPerPage = 6;
   const blogSectionRef = useRef<HTMLDivElement>(null);
+
+  const handleScheduleConsultation = () => {
+    window.open('https://calendly.com/dave-freedommergers/30min', '_blank', 'noopener,noreferrer');
+  };
+
+  const handleDownloadGuide = () => {
+    // Create a link element and trigger download
+    // For now, we'll open a new tab or show an alert
+    // TODO: Replace with actual guide PDF URL when available
+    alert('Guide download will be available soon. Please contact us for more information.');
+    // Example of actual download implementation:
+    // const link = document.createElement('a');
+    // link.href = '/path-to-your-guide.pdf';
+    // link.download = 'Freedom-MA-Guide.pdf';
+    // document.body.appendChild(link);
+    // link.click();
+    // document.body.removeChild(link);
+  };
 
   useEffect(() => {
     const fetchBlogs = async () => {
@@ -144,7 +163,7 @@ const BlogPage: React.FC = () => {
   const generatePaginationButtons = () => {
     const buttons = [];
     const maxVisibleButtons = 5;
-    
+
     if (totalPages <= maxVisibleButtons) {
       // Show all pages if total is less than max visible
       for (let i = 1; i <= totalPages; i++) {
@@ -163,7 +182,7 @@ const BlogPage: React.FC = () => {
         buttons.push(1, '...', page - 1, page, page + 1, '...', totalPages);
       }
     }
-    
+
     return buttons;
   };
 
@@ -279,8 +298,8 @@ const BlogPage: React.FC = () => {
                 variants={fadeInUp}
                 onClick={() => setSelectedCategory(category.name)}
                 className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all duration-300 group relative ${selectedCategory === category.name
-                    ? 'bg-white text-[#303841] shadow-lg border border-[#be3144]/50'
-                    : 'bg-white text-[#3a4750] hover:bg-[#be3144]/10 border border-[#3a4750]/20'
+                  ? 'bg-white text-[#303841] shadow-lg border border-[#be3144]/50'
+                  : 'bg-white text-[#3a4750] hover:bg-[#be3144]/10 border border-[#3a4750]/20'
                   }`}
                 aria-label={`Filter by ${category.name}`}
               >
@@ -323,54 +342,13 @@ const BlogPage: React.FC = () => {
               <div className="max-w-2xl mx-auto">
                 {blogPosts.length === 0 ? (
                   <>
-                    <div className="mb-8">
-                      <motion.div
-                        animate={{ y: [0, -10, 0] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                        className="inline-block"
-                      >
-                        <BookOpen className="w-20 h-20 text-[#be3144] mx-auto mb-6" />
-                      </motion.div>
-                    </div>
+
                     <h3 className="text-4xl font-bold text-white mb-4">Coming Soon!</h3>
                     <p className="text-white/80 mb-6 text-lg leading-relaxed">
                       We're crafting amazing content to help you succeed. Our expert insights and strategies will be available very soon.
                     </p>
-                    <div className="bg-gradient-to-r from-[#be3144]/20 to-[#e63950]/20 rounded-2xl p-8 mb-8 border border-[#be3144]/30">
-                      <p className="text-white/90 mb-4 font-medium">Check back soon for:</p>
-                      <ul className="text-white/80 space-y-2 mb-6">
-                        <li className="flex items-center justify-center gap-2">
-                          <div className="w-2 h-2 bg-[#be3144] rounded-full"></div>
-                          Expert articles on M&A strategies
-                        </li>
-                        <li className="flex items-center justify-center gap-2">
-                          <div className="w-2 h-2 bg-[#be3144] rounded-full"></div>
-                          Founder success stories and case studies
-                        </li>
-                        <li className="flex items-center justify-center gap-2">
-                          <div className="w-2 h-2 bg-[#be3144] rounded-full"></div>
-                          Financial planning and growth guides
-                        </li>
-                        <li className="flex items-center justify-center gap-2">
-                          <div className="w-2 h-2 bg-[#be3144] rounded-full"></div>
-                          Industry insights and market trends
-                        </li>
-                      </ul>
-                    </div>
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                      <button
-                        className="group bg-gradient-to-r from-[#be3144] to-[#e63950] text-white font-semibold py-3 px-8 rounded-lg hover:from-[#e63950] hover:to-[#be3144] transition-all duration-300 transform hover:scale-105"
-                        aria-label="Notify me"
-                      >
-                        Notify Me When Ready
-                      </button>
-                      <Link
-                        to="/"
-                        className="group bg-white/10 border border-white/30 text-white font-semibold py-3 px-8 rounded-lg hover:bg-white/20 transition-all duration-300 transform hover:scale-105"
-                      >
-                        Back to Home
-                      </Link>
-                    </div>
+
+
                   </>
                 ) : (
                   <>
@@ -581,11 +559,10 @@ const BlogPage: React.FC = () => {
                       <button
                         key={pageNum}
                         onClick={() => handlePageChange(pageNum as number)}
-                        className={`w-10 h-10 rounded-xl font-medium transition-all duration-300 ${
-                          page === pageNum
+                        className={`w-10 h-10 rounded-xl font-medium transition-all duration-300 ${page === pageNum
                             ? 'bg-gradient-to-r from-[#be3144] to-[#e63950] text-white shadow-lg'
                             : 'text-[#3a4750] hover:bg-[#be3144]/10 hover:text-[#be3144]'
-                        }`}
+                          }`}
                         aria-label={`Go to page ${pageNum}`}
                         aria-current={page === pageNum ? 'page' : undefined}
                       >
@@ -627,6 +604,7 @@ const BlogPage: React.FC = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
+                onClick={handleScheduleConsultation}
                 className="group bg-white text-[#303841] hover:bg-[#d3d6db] font-semibold text-base py-3 px-6 rounded-lg shadow-md transition-all duration-300 transform hover:scale-105"
                 aria-label="Schedule Consultation"
               >
@@ -641,6 +619,7 @@ const BlogPage: React.FC = () => {
                 />
               </button>
               <button
+                onClick={handleDownloadGuide}
                 className="group border-2 border-white text-white hover:bg-white hover:text-[#303841] font-semibold text-base py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105"
                 aria-label="Download Our Guide"
               >

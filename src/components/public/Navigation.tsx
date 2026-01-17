@@ -358,7 +358,7 @@ const Navigation = () => {
                     ? "bg-[#be3144] text-white hover:bg-[#a02738]"
                     : "bg-transparent text-white border border-white hover:bg-[#be3144] hover:text-white hover:border-[#be3144]"
                 }`}
-                onClick={() => handleNavClick("/get-started")}
+                onClick={() => handleNavClick("/contact")}
               >
                 Get Started
                 <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
@@ -421,7 +421,7 @@ const Navigation = () => {
                 <div className="px-6 pt-4">
                   <Button
                     className="w-full group bg-[#be3144] text-white hover:bg-[#a02738] transition-colors duration-300"
-                    onClick={() => handleNavClick("/get-started")}
+                    onClick={() => handleNavClick("/contact")}
                   >
                     Get Started
                     <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />

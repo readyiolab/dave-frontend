@@ -7,7 +7,7 @@ const Contact = () => {
       <HeroSection
         title="Contact Us Today"
         subtitle="Ready to define your freedom? Schedule a confidential consultation to explore your options with our experienced team."
-        ctaPrimary="Schedule Consultation"
+        ctaPrimary="Start Your Journey"
         ctaSecondary="Learn About Us"
         ctaPrimaryLink="#contact-form"
         ctaSecondaryLink="#about"

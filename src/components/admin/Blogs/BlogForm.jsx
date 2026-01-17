@@ -15,23 +15,26 @@ import { Save, FileText, User, Settings, Tags, Image, Clock, Star } from "lucide
 import Editor from "../../Editor/Editor";
 import { Toaster } from "sonner";
 
-export default function BlogForm({ onClose, blog = {} }) {
+export default function BlogForm({ onClose, blog }) {
+  // Handle null/undefined blog prop
+  const blogData = blog || {};
+  
   const [formData, setFormData] = useState({
-    title: blog.title || "",
-    slug: blog.slug || "",
-    excerpt: blog.excerpt || "",
-    content: blog.content ? (typeof blog.content === 'string' ? JSON.parse(blog.content) : blog.content) : { blocks: [] },
-    category: blog.category || "",
-    image: blog.image || "",
-    author: blog.author || "",
-    author_bio: blog.author_bio || "",
-    status: blog.status || "draft",
-    read_time: blog.read_time || 5,
-    tags: Array.isArray(blog.tags)
-      ? blog.tags.join(", ")
-      : (typeof blog.tags === "string" ? blog.tags : ""),
-    is_featured: blog.is_featured || false,
-    meta_description: blog.meta_description || "",
+    title: blogData.title || "",
+    slug: blogData.slug || "",
+    excerpt: blogData.excerpt || "",
+    content: blogData.content ? (typeof blogData.content === 'string' ? JSON.parse(blogData.content) : blogData.content) : { blocks: [] },
+    category: blogData.category || "",
+    image: blogData.image || "",
+    author: blogData.author || "",
+    author_bio: blogData.author_bio || "",
+    status: blogData.status || "draft",
+    read_time: blogData.read_time || 5,
+    tags: Array.isArray(blogData.tags)
+      ? blogData.tags.join(", ")
+      : (typeof blogData.tags === "string" ? blogData.tags : ""),
+    is_featured: blogData.is_featured || false,
+    meta_description: blogData.meta_description || "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -51,13 +54,13 @@ export default function BlogForm({ onClose, blog = {} }) {
 
   // Update slug when title changes
   useEffect(() => {
-    if (formData.title && !blog.id) { // Only auto-generate for new blogs
+    if (formData.title && !blogData.id) { // Only auto-generate for new blogs
       setFormData((prev) => ({
         ...prev,
         slug: generateSlug(formData.title),
       }));
     }
-  }, [formData.title, blog.id]);
+  }, [formData.title, blogData.id]);
 
   const handleEditorChange = (editorData) => {
     setFormData((prev) => ({ ...prev, content: editorData }));
@@ -164,8 +167,8 @@ export default function BlogForm({ onClose, blog = {} }) {
       };
 
       let response;
-      if (blog.id) {
-        response = await api.put(`/blogs/update/${blog.id}`, data);
+      if (blogData.id) {
+        response = await api.put(`/blogs/update/${blogData.id}`, data);
       } else {
         response = await api.post("/blogs/publish", data);
       }
@@ -173,7 +176,7 @@ export default function BlogForm({ onClose, blog = {} }) {
       await queryClient.invalidateQueries(["blogs"]);
       toast({
         title: "Success",
-        description: blog.id ? "Blog updated successfully" : "Blog created successfully",
+        description: blogData.id ? "Blog updated successfully" : "Blog created successfully",
       });
       onClose(true);
     } catch (err) {
@@ -202,13 +205,13 @@ export default function BlogForm({ onClose, blog = {} }) {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            {blog.id ? 'Edit Blog Post' : 'Create New Blog Post'}
+            {blogData.id ? 'Edit Blog Post' : 'Create New Blog Post'}
           </h1>
           <p className="text-sm text-gray-600 mt-1">
-            {blog.id ? 'Update your existing blog post' : 'Fill in the details to create a new blog post'}
+            {blogData.id ? 'Update your existing blog post' : 'Fill in the details to create a new blog post'}
           </p>
         </div>
-        {blog.id && (
+        {blogData.id && (
           <Badge className={getStatusColor(formData.status)}>
             {formData.status.charAt(0).toUpperCase() + formData.status.slice(1)}
           </Badge>
@@ -255,7 +258,7 @@ export default function BlogForm({ onClose, blog = {} }) {
                   required
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  {blog.id ? 'Edit the slug if needed' : 'Automatically generated from title, but you can edit it'}
+                  {blogData.id ? 'Edit the slug if needed' : 'Automatically generated from title, but you can edit it'}
                 </p>
               </div>
 
@@ -377,10 +380,11 @@ export default function BlogForm({ onClose, blog = {} }) {
           <CardContent>
             <div className="border rounded-lg p-2 min-h-[300px]">
               <Editor
+                key={blogData.id || 'new-blog'}
                 data={formData.content}
                 onChange={handleEditorChange}
                 onImageUpload={handleImageUpload}
-                holder="blog-editor"
+                holder={`blog-editor-${blogData.id || 'new'}`}
               />
             </div>
           </CardContent>
@@ -481,7 +485,7 @@ export default function BlogForm({ onClose, blog = {} }) {
           </Button>
 
           <div className="flex flex-col sm:flex-row gap-2">
-            {blog.id && (
+            {blogData.id && (
               <Button
                 type="button"
                 variant="outline"
@@ -500,7 +504,7 @@ export default function BlogForm({ onClose, blog = {} }) {
               <Save className="h-4 w-4" />
               {isSubmitting
                 ? 'Saving...'
-                : blog.id
+                : blogData.id
                   ? 'Update Blog'
                   : 'Create Blog'
               }

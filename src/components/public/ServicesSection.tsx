@@ -10,10 +10,26 @@ import {
   LifeBuoy,
   ArrowRight,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const ServicesSection = () => {
+  const navigate = useNavigate();
+
+  const handleScheduleConsultation = () => {
+    window.open('https://calendly.com/dave-freedommergers/30min', '_blank', 'noopener,noreferrer');
+  };
+
+  const handleDownloadGuide = () => {
+    alert('Guide download will be available soon. Please contact us for more information.');
+  };
+
+  const handleLearnMore = (service: string) => {
+    navigate('/services');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
   const services = [
     {
+      id: "expert-valuations",
       icon: TrendingUp,
       title: "Expert Valuations",
       description:
@@ -21,6 +37,7 @@ const ServicesSection = () => {
       features: ["In-Depth Market Analysis", "Custom Strategic Options", "Detailed Valuation Reports"],
     },
     {
+      id: "majority-enterprise-sales",
       icon: Handshake,
       title: "Majority Enterprise Sales",
       description:
@@ -28,6 +45,7 @@ const ServicesSection = () => {
       features: ["Comprehensive Exit Strategy", "Confidential Deal Process", "Value Maximization"],
     },
     {
+      id: "minority-recapitalizations",
       icon: PieChart,
       title: "Minority Recapitalizations",
       description:
@@ -35,6 +53,7 @@ const ServicesSection = () => {
       features: ["Flexible Liquidity Access", "Retained Operational Control", "Equity Upside Potential"],
     },
     {
+      id: "synergistic-mergers",
       icon: GitMerge,
       title: "Synergistic Mergers",
       description:
@@ -42,6 +61,7 @@ const ServicesSection = () => {
       features: ["Strategic Partnership Building", "Complementary Business Fit", "Win-Win Deal Structures"],
     },
     {
+      id: "senior-debt-restructure",
       icon: CreditCard,
       title: "Senior Debt Restructure",
       description:
@@ -49,6 +69,7 @@ const ServicesSection = () => {
       features: ["Optimized Debt Solutions", "Enhanced Financial Flexibility", "Strategic Growth Support"],
     },
     {
+      id: "short-term-finance-facilities",
       icon: DollarSign,
       title: "Short-Term Finance Facilities",
       description:
@@ -56,6 +77,7 @@ const ServicesSection = () => {
       features: ["Rapid Bridge Financing", "Immediate Capital Access", "Business Continuity Support"],
     },
     {
+      id: "distressed-and-turnaround",
       icon: LifeBuoy,
       title: "Distressed & Turnaround",
       description:
@@ -95,13 +117,14 @@ const ServicesSection = () => {
           <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-[#3a4750] leading-relaxed max-w-2xl sm:max-w-3xl mx-auto">
             Our tailored merger and acquisition services empower founders with solutions that align with their vision of freedom, guiding you from valuation to execution with expertise and care.
           </p>
-          
+
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8 lg:gap-10 mb-12 sm:mb-16 lg:mb-20">
           {services.map((service, index) => (
             <Card
               key={index}
+              id={service.id}
               className={`p-6 sm:p-8 lg:p-10 hover-lift group flex flex-col h-full bg-white border border-[#3a4750]/10 hover:border-[#be3144]/50 transition-all duration-300 shadow-md hover:shadow-xl rounded-2xl fade-in-up stagger-${index % 4 + 1}`}
               role="article"
               aria-labelledby={`service-title-${index}`}
@@ -126,14 +149,7 @@ const ServicesSection = () => {
                   </div>
                 ))}
               </div>
-              <Button
-                variant="ghost"
-                className="mt-6 sm:mt-8 w-full bg-gradient-to-r from-[#be3144] to-[#e63950] text-white hover:bg-[#be3144] transition-colors duration-300 text-base sm:text-lg py-4 sm:py-6 rounded-xl transform hover:scale-105"
-                aria-label={`Learn more about ${service.title}`}
-              >
-                Learn More
-                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Button>
+
             </Card>
           ))}
         </div>
@@ -164,7 +180,7 @@ const ServicesSection = () => {
                   <p className="text-sm sm:text-lg text-[#3a4750] leading-relaxed">
                     {step.description}
                   </p>
-                 
+
                 </div>
               ))}
             </div>
@@ -185,6 +201,7 @@ const ServicesSection = () => {
               </p>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
                 <Button
+                  onClick={handleScheduleConsultation}
                   className="group bg-white text-[#303841] hover:bg-[#d3d6db] font-bold text-sm sm:text-base py-2 sm:py-3 px-4 sm:px-6 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300"
                   aria-label="Schedule a consultation"
                 >
@@ -192,6 +209,7 @@ const ServicesSection = () => {
                   <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
                 <Button
+                  onClick={handleDownloadGuide}
                   variant="outline"
                   className="group bg-transparent border-2 border-white text-white hover:bg-white hover:text-[#303841] font-bold text-sm sm:text-base py-2 sm:py-3 px-4 sm:px-6 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300"
                   aria-label="Download our guide"

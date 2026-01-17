@@ -140,8 +140,7 @@ export default function BlogsPage() {
             </div>
             <div className="p-6">
               <BlogForm 
-                setIsDialogOpen={handleFormClose}
-                onSuccess={() => handleFormClose(true)}
+                onClose={handleFormClose}
               />
             </div>
           </div>

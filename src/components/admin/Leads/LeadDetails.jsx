@@ -19,10 +19,6 @@ export default function LeadDetails() {
   const addInteractionMutation = useMutation({
     mutationFn: async (data) => {
       const response = await api.post('/leads/interaction', data);
-      await api.post('/admin/audit', {
-        action: 'add_interaction',
-        metadata: { leadId: data.lead_id, userId: user?.id },
-      });
       return response.data;
     },
     onSuccess: (data) => {
@@ -42,10 +38,9 @@ export default function LeadDetails() {
 
   const sendSurveyMutation = useMutation({
     mutationFn: async () => {
-      await api.post(`/leads/survey`, { leadId: selectedLead?.id });
-      await api.post('/admin/audit', {
-        action: 'send_survey',
-        metadata: { leadId: selectedLead?.id, userId: user?.id },
+      await api.post(`/leads/survey`, { 
+        leadId: selectedLead?.id,
+        questions: ['How would you rate our service?', 'Would you recommend us?'] 
       });
     },
     onSuccess: () =>
@@ -62,7 +57,11 @@ export default function LeadDetails() {
 
   const handleAddInteraction = () => {
     if (selectedLead && notes) {
-      addInteractionMutation.mutate({ lead_id: selectedLead.id, notes });
+      addInteractionMutation.mutate({ 
+        leadId: selectedLead.id, 
+        notes,
+        type: 'note' // Required field for the backend
+      });
     }
   };
 
@@ -133,18 +132,13 @@ export default function LeadDetails() {
                     <div className="flex items-start gap-2">
                       <MessageSquare className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
                       <div>
-                        <strong>Message:</strong>
-                        <p className="mt-1 text-gray-700">{selectedLead.message}</p>
+                        <strong>Message:</strong> {selectedLead.message}
+                        
                       </div>
                     </div>
                   </div>
                 )}
-                {selectedLead?.session_id && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Hash className="h-4 w-4 text-gray-500" />
-                    <span><strong>Session ID:</strong> {selectedLead.session_id}</span>
-                  </div>
-                )}
+                
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Calendar className="h-4 w-4 text-gray-500" />
                   <span><strong>Created:</strong> {formatDate(selectedLead.created_at)}</span>

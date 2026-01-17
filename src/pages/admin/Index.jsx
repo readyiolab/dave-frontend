@@ -57,7 +57,7 @@ export default function Index() {
         <Card className="border-gray-200 shadow-sm">
           <CardHeader>
             <CardTitle className="text-2xl font-bold text-gray-900">
-              Welcome, {user?.username || 'Admin'}
+              Welcome, Admin
             </CardTitle>
           </CardHeader>
 

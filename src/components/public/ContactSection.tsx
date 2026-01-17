@@ -32,9 +32,10 @@ const ContactSection = () => {
       icon: Phone,
       title: "Call Us",
       description: "Speak directly with our expert team.",
-      value: "+1 (555) 123-4567",
-      action: "tel:+15551234567",
+      value: "(845) 393-3549",
+      action: "tel:+18453933549",
     },
+
     {
       icon: MapPin,
       title: "Visit Us",
@@ -141,6 +142,21 @@ const ContactSection = () => {
     );
   };
 
+  const handleBookConsultation = () => {
+    const formElement = document.querySelector('[role="form"]');
+    if (formElement) {
+      formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const handleContactInfoClick = (action: string) => {
+    if (action.startsWith('mailto:') || action.startsWith('tel:')) {
+      window.location.href = action;
+    } else if (action.startsWith('http')) {
+      window.open(action, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   return (
     <section className="py-20 sm:py-24 lg:py-28 bg-[#d3d6db] overflow-hidden relative">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -158,7 +174,7 @@ const ContactSection = () => {
 
         <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 mb-12 sm:mb-16 lg:mb-20">
           {/* Contact Form */}
-          <Card className="p-6 sm:p-8 lg:p-10 bg-white border border-[#3a4750]/10 hover:border-[#be3144]/50 shadow-md hover:shadow-xl transition-all duration-300 rounded-2xl fade-in-up" role="form" aria-labelledby="form-heading">
+          <Card id="contact-form" className="p-6 sm:p-8 lg:p-10 bg-white border border-[#3a4750]/10 hover:border-[#be3144]/50 shadow-md hover:shadow-xl transition-all duration-300 rounded-2xl fade-in-up" role="form" aria-labelledby="form-heading">
             <div className="mb-6 sm:mb-8">
               <h3 id="form-heading" className="text-xl sm:text-2xl lg:text-3xl font-bold text-[#303841] mb-3 sm:mb-4">
                 Start Your Journey
@@ -275,6 +291,7 @@ const ContactSection = () => {
               {contactInfo.map((info, index) => (
                 <Card
                   key={index}
+                  onClick={() => handleContactInfoClick(info.action)}
                   className="p-6 bg-white border border-[#3a4750]/10 hover:border-[#be3144]/50 shadow-md hover:shadow-xl transition-all duration-300 rounded-2xl hover-lift group cursor-pointer"
                   role="article"
                   aria-labelledby={`contact-info-${index}`}
@@ -323,6 +340,7 @@ const ContactSection = () => {
             Join hundreds of founders who’ve successfully transitioned to their next chapter with Freedom M&A. Let’s discuss your vision of freedom today.
           </p>
           <Button
+            onClick={handleBookConsultation}
             size="lg"
             className="group bg-white text-[#303841] hover:bg-[#d3d6db] font-bold text-sm sm:text-base py-3 sm:py-4 px-6 sm:px-8 rounded-xl shadow-md transform hover:scale-105 transition-transform duration-300"
             aria-label="Book Your Consultation"

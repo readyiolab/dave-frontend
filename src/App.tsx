@@ -15,6 +15,7 @@ const Contact = lazy(() => import("./components/public/Contact"));
 const Blog = lazy(() => import("./components/public/BlogPage"));
 const BlogPost = lazy(() => import("./components/public/BlogPostPage"));
 const SearchResults = lazy(() => import("./components/public/SearchResults"));
+const ScrollToAnchor = lazy(() => import("./components/public/ScrollToAnchor"));
 const Layout = lazy(() => import("./components/admin/layout/Layout"));
 const Login = lazy(() => import("./components/admin/Auth/Login"));
 const Index = lazy(() => import("./pages/admin/Index"));
@@ -24,7 +25,9 @@ const CommentsPage = lazy(() => import("./pages/admin/CommentsPage"));
 const NewslettersPage = lazy(() => import("./pages/admin/NewslettersPage"));
 const AppointmentsPage = lazy(() => import("./pages/admin/AppointmentsPage"));
 const ContactsPage = lazy(() => import("./pages/admin/ContactsPage"));
+const EmailCampaignsPage = lazy(() => import("./pages/admin/EmailCampaignsPage"));
 const MetricsPage = lazy(() => import("./pages/admin/MetricsPage"));
+const UnsubscribePage = lazy(() => import("./pages/public/UnsubscribePage"));
 const NotFound = lazy(() => import("./components/public/NotFound"));
 
 // Loader Component
@@ -56,6 +59,7 @@ export default function App() {
       <Sonner />
       <BrowserRouter>
         <Suspense fallback={<Loader />}>
+          <ScrollToAnchor />
           <Routes>
             <Route
               path="/login"
@@ -72,6 +76,7 @@ export default function App() {
               <Route path="newsletters" element={<NewslettersPage />} />
               <Route path="appointments" element={<AppointmentsPage />} />
               <Route path="contacts" element={<ContactsPage />} />
+              <Route path="campaigns" element={<EmailCampaignsPage />} />
               <Route path="metrics" element={<MetricsPage />} />
             </Route>
             <Route element={<PublicLayout />}>
@@ -81,11 +86,12 @@ export default function App() {
               <Route path="/dave" element={<DaveMarshall />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/blog" element={<Blog />} />
-              
+
               <Route path="/search" element={<SearchResults />} />
-              <Route path="/?s" element={<SearchRedirect />} /> 
+              <Route path="/?s" element={<SearchRedirect />} />
             </Route>
             <Route path="/blog/:slug" element={<BlogPost />} />
+            <Route path="/unsubscribe/:email" element={<UnsubscribePage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>

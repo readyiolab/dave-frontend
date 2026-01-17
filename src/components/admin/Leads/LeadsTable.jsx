@@ -37,10 +37,6 @@ export default function LeadsTable({ leads, page, pageSize, total, setPage }) {
       // Remove the duplicate /api - the api instance should already handle the base path
       const response = await api.get(`/leads/interactions/${lead.id}`);
       dispatch(setInteractions(response.data));
-      await api.post('/admin/audit', {
-        action: 'view_lead',
-        metadata: { leadId: lead.id, userId: user?.id },
-      });
     } catch (err) {
       console.error('Error fetching interactions:', err);
       toast({

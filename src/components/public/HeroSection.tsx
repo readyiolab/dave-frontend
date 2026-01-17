@@ -1,14 +1,44 @@
-import { Button } from "@/components/ui/button";
+import React from "react";
 import { ArrowRight, Sparkles, Star, Zap } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const HeroSection = ({ 
   title = "Define Your Path to Ultimate Freedom",
   subtitle = "For over three decades, we've guided visionary founders through transformative transitions, helping business owners align their journey with personal and financial freedom.",
   ctaPrimary = "Start Your Journey",
   ctaSecondary = "Learn Our Process",
-  ctaPrimaryLink = "#",
-  ctaSecondaryLink = "#"
+  ctaPrimaryLink = "#contact-form",
+  ctaSecondaryLink = "#services"
 }) => {
+  const navigate = useNavigate();
+
+  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, link: string) => {
+    e.preventDefault();
+    if (link.startsWith('#')) {
+      // Handle anchor links with smooth scrolling
+      const targetId = link.substring(1); // Remove the '#'
+      const element = document.getElementById(targetId);
+      if (element) {
+        // Calculate offset to account for any fixed headers (adjust if needed)
+        const offset = 80; // Adjust this value based on your header height
+        const elementPosition = element.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - offset;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      }
+    } else if (link.startsWith('/')) {
+      // Handle route navigation
+      navigate(link);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (link.startsWith('http')) {
+      // Handle external links
+      window.open(link, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-[#d3d6db] via-[#3a4750] to-[#303841]">
       {/* Animated Background Elements */}
@@ -62,7 +92,8 @@ const HeroSection = ({
             <div className="flex flex-col sm:flex-row gap-4 sm:gap-4 lg:gap-6 justify-center items-center">
               <a 
                 href={ctaPrimaryLink}
-                className="group relative px-8 py-4 sm:px-8 sm:py-4 lg:px-10 lg:py-5 bg-[#be3144] rounded-full text-[#d3d6db] font-bold text-lg sm:text-base lg:text-xl shadow-xl hover:shadow-[#be3144]/25 transition-all duration-300 hover:scale-105 w-full sm:w-auto inline-block text-center"
+                onClick={(e) => handleLinkClick(e, ctaPrimaryLink)}
+                className="group relative px-8 py-4 sm:px-8 sm:py-4 lg:px-10 lg:py-5 bg-[#be3144] rounded-full text-[#d3d6db] font-bold text-lg sm:text-base lg:text-xl shadow-xl hover:shadow-[#be3144]/25 transition-all duration-300 hover:scale-105 w-full sm:w-auto inline-block text-center cursor-pointer"
               >
                 <span className="relative z-10 flex items-center justify-center gap-3 sm:gap-2 sm:gap-3">
                   {ctaPrimary}
@@ -73,7 +104,8 @@ const HeroSection = ({
 
               <a 
                 href={ctaSecondaryLink}
-                className="group px-8 py-4 sm:px-8 sm:py-4 lg:px-10 lg:py-5 bg-white backdrop-blur-md border border-[#d3d6db]/20 rounded-full text-black font-semibold text-lg sm:text-base lg:text-xl hover:bg-[#d3d6db]/20 transition-all duration-300 hover:scale-105 w-full sm:w-auto inline-block text-center"
+                onClick={(e) => handleLinkClick(e, ctaSecondaryLink)}
+                className="group px-8 py-4 sm:px-8 sm:py-4 lg:px-10 lg:py-5 bg-white backdrop-blur-md border border-[#d3d6db]/20 rounded-full text-black font-semibold text-lg sm:text-base lg:text-xl hover:bg-[#d3d6db]/20 transition-all duration-300 hover:scale-105 w-full sm:w-auto inline-block text-center cursor-pointer"
               >
                 {ctaSecondary}
               </a>

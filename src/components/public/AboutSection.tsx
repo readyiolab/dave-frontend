@@ -2,8 +2,18 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Target, Heart, Shield, ArrowRight } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 
 const AboutSection = () => {
+  const navigate = useNavigate();
+
+  const handleScheduleConsultation = () => {
+    window.open('https://calendly.com/dave-freedommergers/30min', '_blank', 'noopener,noreferrer');
+  };
+
+  const handleDownloadGuide = () => {
+    alert('Guide download will be available soon. Please contact us for more information.');
+  };
   const values = [
     {
       icon: Target,
@@ -90,7 +100,7 @@ const AboutSection = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-20 items-center mb-12 sm:mb-16 lg:mb-24">
           <div className="space-y-6 sm:space-y-8 lg:space-y-10 fade-in-up">
-            <div className="space-y-6 sm:space-y-8">
+            <div id="philosophy" className="space-y-6 sm:space-y-8">
               <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#303841]">
                 How Do You Define Freedom?
               </h3>
@@ -117,13 +127,13 @@ const AboutSection = () => {
               src="./about.jpg"
               alt="Freedom Mergers & Acquisitions Team"
               className="w-full max-w-sm sm:max-w-md lg:max-w-lg mx-auto rounded-3xl shadow-2xl hover:scale-105 transition-transform duration-500"
-              
+
             />
-           
+
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 fade-in-up stagger-2">
+        <div id="approach" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 fade-in-up stagger-2">
           {values.map((value, index) => (
             <Card
               key={index}
@@ -142,7 +152,7 @@ const AboutSection = () => {
           ))}
         </div>
 
-        <div className="mt-12 sm:mt-16 lg:mt-20 bg-gradient-to-r from-[#be3144] to-[#e63950] rounded-3xl p-8 sm:p-10 lg:p-12 text-center fade-in-up stagger-3 shadow-lg">
+        <div id="track-record" className="mt-12 sm:mt-16 lg:mt-20 bg-gradient-to-r from-[#be3144] to-[#e63950] rounded-3xl p-8 sm:p-10 lg:p-12 text-center fade-in-up stagger-3 shadow-lg">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
             {stats.map((stat, index) => (
               <div
@@ -176,6 +186,7 @@ const AboutSection = () => {
               </p>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
                 <Button
+                  onClick={handleScheduleConsultation}
                   className="group bg-gradient-to-r from-[#be3144] to-[#e63950] text-white hover:bg-[#e63950] font-bold text-sm sm:text-base py-2 sm:py-3 px-4 sm:px-6 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300"
                   aria-label="Schedule a consultation"
                 >
@@ -183,6 +194,7 @@ const AboutSection = () => {
                   <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
                 <Button
+                  onClick={handleDownloadGuide}
                   variant="outline"
                   className="group bg-transparent border-2 border-white text-white hover:bg-white hover:text-[#303841] font-bold text-sm sm:text-base py-2 sm:py-3 px-4 sm:px-6 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300"
                   aria-label="Download our guide"
