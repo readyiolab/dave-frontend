@@ -1493,7 +1493,7 @@ const Chatbot = () => {
 
   return (
     <>
-      <div className="fixed bottom-4 right-4 z-[9999]">
+      <div className={`fixed bottom-4 right-4 z-[9999] ${isOpen ? "hidden sm:block" : ""}`}>
         <div className="relative">
           <button
             onClick={toggleChat}
@@ -1515,8 +1515,8 @@ const Chatbot = () => {
         <div
           className={`fixed flex flex-col bg-[#d3d6db] border border-[#303841] shadow-2xl transition-all duration-300 ease-in-out overflow-hidden z-[9998] 
             ${isMinimized
-              ? "bottom-20 right-4 w-80 h-16 rounded-2xl"
-              : "bottom-0 right-0 w-full h-full sm:bottom-20 sm:right-4 sm:w-96 sm:h-[500px] sm:rounded-2xl rounded-none"
+              ? "bottom-20 left-4 right-4 h-16 rounded-2xl sm:w-80 sm:left-auto sm:right-4"
+              : "bottom-4 left-4 right-4 h-[85vh] max-h-[600px] rounded-2xl sm:bottom-20 sm:right-4 sm:left-auto sm:w-96 sm:h-[500px] sm:max-h-none"
             }`}
         >
           <div className="flex-shrink-0 p-4 border-b bg-[#3a4750] rounded-t-2xl flex justify-between items-center h-16">
@@ -1766,7 +1766,7 @@ const Chatbot = () => {
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       placeholder="Ask about mergers, acquisitions, valuations..."
-                      className="bg-white border border-[#303841] focus:ring-2 focus:ring-[#be3144] focus:border-[#be3144] rounded-xl text-sm py-2 px-4 h-10 w-full text-[#303841]"
+                      className="bg-white border border-[#303841] focus:ring-2 focus:ring-[#be3144] focus:border-[#be3144] rounded-xl text-base sm:text-sm py-2 px-4 h-10 w-full text-[#303841]"
                       autoFocus
                       disabled={isLoading}
                       maxLength={2000}
