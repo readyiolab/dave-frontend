@@ -560,8 +560,8 @@ const BlogPage: React.FC = () => {
                         key={pageNum}
                         onClick={() => handlePageChange(pageNum as number)}
                         className={`w-10 h-10 rounded-xl font-medium transition-all duration-300 ${page === pageNum
-                            ? 'bg-gradient-to-r from-[#be3144] to-[#e63950] text-white shadow-lg'
-                            : 'text-[#3a4750] hover:bg-[#be3144]/10 hover:text-[#be3144]'
+                          ? 'bg-gradient-to-r from-[#be3144] to-[#e63950] text-white shadow-lg'
+                          : 'text-[#3a4750] hover:bg-[#be3144]/10 hover:text-[#be3144]'
                           }`}
                         aria-label={`Go to page ${pageNum}`}
                         aria-current={page === pageNum ? 'page' : undefined}

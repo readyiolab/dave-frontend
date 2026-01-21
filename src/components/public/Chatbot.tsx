@@ -20,6 +20,20 @@ const Chatbot = () => {
   const [isLeadSubmitting, setIsLeadSubmitting] = useState(false);
   const scrollAreaRef = useRef(null);
 
+  // Meeting booking conversation flow state - enhanced for Calendly
+  // Meeting booking conversation flow state - enhanced for Calendly
+  const [conversationMode, setConversationMode] = useState<
+    'normal' | 'booking_name' | 'booking_email' | 'booking_time' | 'booking_confirm'
+  >('normal');
+  const [bookingData, setBookingData] = useState({
+    name: "",
+    email: "",
+    timePreference: "",
+    datePreference: "",
+    suggestedTime: null as { startTime: string; formatted: string } | null,
+    alternatives: [] as { startTime: string; formatted: string }[],
+  });
+
   const API_BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:3000").replace(/\/api$/, '');
   const API_ENDPOINTS = {
     chat: `${API_BASE_URL}/api/ai-chat/chat`,
@@ -28,6 +42,9 @@ const Chatbot = () => {
     topics: `${API_BASE_URL}/api/ai-chat/topics`,
     feedback: `${API_BASE_URL}/api/ai-chat/feedback`,
     health: `${API_BASE_URL}/api/ai-chat/health`,
+    bookMeeting: `${API_BASE_URL}/api/ai-chat/book-meeting`,
+    checkAvailability: `${API_BASE_URL}/api/ai-chat/check-availability`,
+    confirmBooking: `${API_BASE_URL}/api/ai-chat/confirm-booking`,
   };
   const CALENDLY_LINK = "https://calendly.com/dave-freedommergers/30min";
 
@@ -121,6 +138,100 @@ const Chatbot = () => {
     }
   };
 
+  // Helper function to detect meeting booking intent
+  const detectMeetingIntent = (message: string): boolean => {
+    const lowerMessage = message.toLowerCase();
+    const meetingPhrases = [
+      'book a meeting',
+      'schedule a meeting',
+      'set up a meeting',
+      'want to book',
+      'want to schedule',
+      'schedule consultation',
+      'book consultation',
+      'schedule an appointment',
+      'book an appointment',
+      'i want a meeting',
+      'can i book',
+      'can i schedule',
+      'need a meeting',
+      'arrange a meeting'
+    ];
+    return meetingPhrases.some(phrase => lowerMessage.includes(phrase));
+  };
+
+  // Handle meeting booking submission
+  const handleMeetingBooking = async (name: string, email: string) => {
+    try {
+      const result = await makeApiCall(API_ENDPOINTS.bookMeeting, {
+        name,
+        email,
+        sessionId,
+      });
+
+      const timestamp = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+      if (result.success) {
+        if (result.leadId && Number.isInteger(result.leadId) && result.leadId > 0) {
+          setLeadId(result.leadId);
+        }
+        setLeadInfo({ name, email, phone: "" });
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "bot",
+            content: result.message,
+            timestamp,
+            isSuccess: true,
+            contactInfo: {
+              email: result.nextSteps?.contact || "info@freedommergers.com",
+              emailLink: `mailto:${result.nextSteps?.contact || "info@freedommergers.com"}`,
+              schedule: result.nextSteps?.calendly || CALENDLY_LINK,
+            },
+          },
+        ]);
+
+        // Open Calendly after success
+        setTimeout(() => {
+          window.open(CALENDLY_LINK, "_blank");
+        }, 1500);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "bot",
+            content: result.message || "There was an issue booking your meeting. Please try again or contact us directly.",
+            timestamp,
+            isError: true,
+            contactInfo: {
+              email: "info@freedommergers.com",
+              emailLink: "mailto:info@freedommergers.com",
+              schedule: CALENDLY_LINK,
+            },
+          },
+        ]);
+      }
+    } catch (error) {
+      console.error("Meeting booking error:", error);
+      const timestamp = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "bot",
+          content: "Sorry, there was an error processing your meeting request. Please contact us directly.",
+          timestamp,
+          isError: true,
+          contactInfo: {
+            email: "info@freedommergers.com",
+            emailLink: "mailto:info@freedommergers.com",
+            schedule: CALENDLY_LINK,
+          },
+        },
+      ]);
+    }
+  };
+
   // Handle sending user messages
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -141,6 +252,589 @@ const Chatbot = () => {
     setIsLoading(true);
 
     try {
+      // Handle conversation modes for meeting booking
+      if (conversationMode === 'booking_name') {
+        // User is providing their name
+        const name = userMessage.trim();
+        if (name.length < 2) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "bot",
+              content: "That name seems too short. Could you please provide your full name?",
+              timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            },
+          ]);
+          setIsLoading(false);
+          return;
+        }
+
+        setBookingData({ ...bookingData, name });
+        setConversationMode('booking_email');
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "bot",
+            content: `Great, ${name}! 📧 **Now, what's your email address?** We'll send you a confirmation with the meeting details.`,
+            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          },
+        ]);
+        setIsLoading(false);
+        return;
+      }
+
+      if (conversationMode === 'booking_email') {
+        // User is providing their email
+        const email = userMessage.trim();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!emailRegex.test(email)) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "bot",
+              content: "That doesn't look like a valid email address. Please enter a valid email (e.g., your.name@example.com)",
+              timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            },
+          ]);
+          setIsLoading(false);
+          return;
+        }
+
+        // Save email and ask for time preference
+        setBookingData({ ...bookingData, email });
+        setConversationMode('booking_time');
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "bot",
+            content: `Thanks, ${bookingData.name}! 📅 **When would you like to schedule your meeting?**\n\nYou can say things like:\n• "Tomorrow at 2pm"\n• "Next Monday morning"\n• "Friday afternoon"`,
+            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          },
+        ]);
+        setIsLoading(false);
+        return;
+      }
+
+      if (conversationMode === 'booking_time') {
+        // User is providing their preferred time
+        let timePreference = userMessage.trim().toLowerCase();
+
+        // Helper function to check if message looks like a time/date
+        const looksLikeTimeOrDate = (msg: string): boolean => {
+          const timeKeywords = [
+            'today', 'tomorrow', 'tomrrow', 'tmrw', 'tmr', 'monday', 'tuesday', 'wednesday',
+            'thursday', 'friday', 'saturday', 'sunday', 'mon', 'tue', 'wed', 'thu', 'fri',
+            'sat', 'sun', 'morning', 'afternoon', 'evening', 'night', 'am', 'pm', 'next week',
+            'day after', 'at ', ':00', ':30'
+          ];
+          const hasTimeWord = timeKeywords.some(kw => msg.includes(kw));
+          const hasNumber = /\d/.test(msg);
+          return hasTimeWord || hasNumber;
+        };
+
+        // Helper function to check if message is a question or unrelated
+        const isQuestionOrUnrelated = (msg: string): boolean => {
+          const questionWords = ['who', 'what', 'where', 'when', 'why', 'how', 'is ', 'are ', 'can ', 'do ', 'does', 'tell me', 'explain', 'about'];
+          const isQuestion = questionWords.some(qw => msg.startsWith(qw) || msg.includes('?'));
+          const looksLikeTime = looksLikeTimeOrDate(msg);
+          return isQuestion && !looksLikeTime;
+        };
+
+        // Handle confirmation responses that shouldn't trigger availability check
+        if (timePreference === 'yes' || timePreference === 'ok' || timePreference === 'sure' || timePreference === 'yeah' || timePreference === 'yep') {
+          // User is confirming the date but we still need a time
+          const dateStr = bookingData.datePreference
+            ? new Date(bookingData.datePreference).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+            : 'that day';
+
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "bot",
+              content: `Great! What time on ${dateStr} works best for you? (e.g., "2pm", "10:30 AM", "afternoon")`,
+              timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            },
+          ]);
+          setIsLoading(false);
+          return;
+        }
+
+        // Check if user is asking a question instead of providing time
+        if (isQuestionOrUnrelated(timePreference)) {
+          // Answer the question via AI chat, then remind about booking
+          try {
+            const chatResult = await makeApiCall(API_ENDPOINTS.chat, {
+              message: userMessage.trim(),
+              sessionId,
+            });
+
+            const botTimestamp = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+            setMessages((prev) => [
+              ...prev,
+              {
+                role: "bot",
+                content: chatResult.message + `\n\n📅 **Back to booking:** When would you like to schedule your meeting, ${bookingData.name}?`,
+                timestamp: botTimestamp,
+              },
+            ]);
+          } catch (error) {
+            setMessages((prev) => [
+              ...prev,
+              {
+                role: "bot",
+                content: `Great question! For detailed info, I recommend discussing with Dave Marshall directly.\n\n📅 **Back to booking:** When would you like to schedule your meeting?`,
+                timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+              },
+            ]);
+          }
+          setIsLoading(false);
+          return;
+        }
+
+        // If we already have a date pending, combine it with this new time input
+        if (bookingData.datePreference) {
+          // e.g., "Answer: 2pm" -> combined with date "2026-01-20"
+          const dateObj = new Date(bookingData.datePreference);
+          const dateStr = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+          timePreference = `on ${dateStr} at ${userMessage.trim()}`;
+        }
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "bot",
+            content: "⏳ Checking availability...",
+            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          },
+        ]);
+
+        try {
+          const result = await makeApiCall(API_ENDPOINTS.checkAvailability, {
+            timePreference,
+            name: bookingData.name,
+            email: bookingData.email,
+            sessionId,
+          });
+
+          if (result.success) {
+            if (result.needsTime) {
+              // Backend recognized the date but needs a specific time
+              setBookingData({
+                ...bookingData,
+                datePreference: result.parsedDate // Store the parsed date
+              });
+
+              setMessages((prev) => [
+                ...prev,
+                {
+                  role: "bot",
+                  content: result.message || "What time would you like?",
+                  timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                },
+              ]);
+              // Stay in booking_time mode to get the time next
+            }
+            else if (result.available) {
+              // Time is available
+              setBookingData({
+                ...bookingData,
+                timePreference,
+                datePreference: "", // Clear pending date
+                suggestedTime: result.suggestedTime,
+                alternatives: result.alternatives || [],
+              });
+              setConversationMode('booking_confirm');
+
+              let confirmMessage = `✅ Perfect! **${result.suggestedTime.formatted}** is available.\n\nShall I book that for you?`;
+
+              setMessages((prev) => [
+                ...prev,
+                {
+                  role: "bot",
+                  content: confirmMessage,
+                  timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                },
+              ]);
+            } else if (result.alternatives && result.alternatives.length > 0) {
+              // Time not available but have alternatives
+              setBookingData({
+                ...bookingData,
+                timePreference,
+                datePreference: "",
+                suggestedTime: result.alternatives[0],
+                alternatives: result.alternatives,
+              });
+              setConversationMode('booking_confirm');
+
+              setMessages((prev) => [
+                ...prev,
+                {
+                  role: "bot",
+                  content: `${result.message}\n\n${result.alternatives.map((alt, i) => `${i + 1}. ${alt.formatted}`).join('\n')}\n\nWhatever works best for you - just type the number or propose another time.`,
+                  timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                },
+              ]);
+            } else {
+              // No availability - show fallback
+              setMessages((prev) => [
+                ...prev,
+                {
+                  role: "bot",
+                  content: result.message || "Sorry, I couldn't find available times, but you can check the full calendar here:",
+                  timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                  contactInfo: {
+                    email: "info@freedommergers.com",
+                    emailLink: "mailto:info@freedommergers.com",
+                    schedule: CALENDLY_LINK,
+                  },
+                },
+              ]);
+              // Reset and go back to normal
+              setConversationMode('normal');
+              setBookingData({ name: "", email: "", timePreference: "", datePreference: "", suggestedTime: null, alternatives: [] });
+            }
+          } else {
+            // Handle specific failure reasons
+            if (result.reason === 'not_a_time') {
+              // The backend couldn't parse a time, so treat this as a question/chat
+              try {
+                const chatResult = await makeApiCall(API_ENDPOINTS.chat, {
+                  message: userMessage.trim(),
+                  sessionId,
+                });
+
+                const botTimestamp = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    role: "bot",
+                    content: chatResult.message + `\n\n📅 **Back to booking:** When would you like to schedule your meeting, ${bookingData.name}?`,
+                    timestamp: botTimestamp,
+                  },
+                ]);
+              } catch (chatError) {
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    role: "bot",
+                    content: `I didn't quite catch a time there. Which day and time works best for you? (e.g., "Tomorrow at 2pm")`,
+                    timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                  },
+                ]);
+              }
+              setIsLoading(false);
+              return;
+            }
+
+            // General API error or other failure
+            setMessages((prev) => [
+              ...prev,
+              {
+                role: "bot",
+                content: result.message || "Sorry, I couldn't find available times, but you can check the full calendar here:",
+                timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                contactInfo: {
+                  email: "info@freedommergers.com",
+                  emailLink: "mailto:info@freedommergers.com",
+                  schedule: CALENDLY_LINK,
+                },
+              },
+            ]);
+            // Reset and go back to normal
+            setConversationMode('normal');
+            setBookingData({ name: "", email: "", timePreference: "", datePreference: "", suggestedTime: null, alternatives: [] });
+          }
+        } catch (error) {
+          console.error("Availability check error:", error);
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "bot",
+              content: "I'm having trouble checking availability. Would you like to try another time, or book directly?",
+              timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+              contactInfo: {
+                email: "info@freedommergers.com",
+                emailLink: "mailto:info@freedommergers.com",
+                schedule: CALENDLY_LINK,
+              },
+            },
+          ]);
+        }
+        setIsLoading(false);
+        return;
+      }
+
+      if (conversationMode === 'booking_confirm') {
+        const response = userMessage.trim().toLowerCase();
+
+        // Check if user selected a numbered alternative (strict matching: "1", "#1", "Option 1")
+        const numberMatch = response.match(/^(?:option\s+|#\s*)?(\d+)\.?$/);
+        let selectedAlternative = null;
+
+        if (numberMatch && bookingData.alternatives.length > 0) {
+          const index = parseInt(numberMatch[1]) - 1;
+          if (index >= 0 && index < bookingData.alternatives.length) {
+            selectedAlternative = bookingData.alternatives[index];
+            setBookingData({
+              ...bookingData,
+              suggestedTime: selectedAlternative,
+            });
+          }
+        }
+
+        if (response === 'yes' || response === 'confirm' || response === 'book' || response === 'ok' || selectedAlternative) {
+          // Confirm and book
+          const timeToBook = selectedAlternative || bookingData.suggestedTime;
+
+          if (!timeToBook) {
+            setMessages((prev) => [
+              ...prev,
+              {
+                role: "bot",
+                content: "Something went wrong. Please try again or book directly:",
+                timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                contactInfo: { schedule: CALENDLY_LINK },
+              },
+            ]);
+            setConversationMode('normal');
+            setBookingData({ name: "", email: "", timePreference: "", datePreference: "", suggestedTime: null, alternatives: [] });
+            setIsLoading(false);
+            return;
+          }
+
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "bot",
+              content: `⏳ Booking your meeting for ${timeToBook.formatted}...`,
+              timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            },
+          ]);
+
+          try {
+            const result = await makeApiCall(API_ENDPOINTS.confirmBooking, {
+              name: bookingData.name,
+              email: bookingData.email,
+              startTime: timeToBook.startTime,
+              sessionId,
+            });
+
+            if (result.success) {
+              setLeadId(result.leadId);
+              setLeadInfo({ name: bookingData.name, email: bookingData.email, phone: "" });
+
+              setMessages((prev) => [
+                ...prev,
+                {
+                  role: "bot",
+                  content: result.message,
+                  timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                  isSuccess: true,
+                  contactInfo: {
+                    email: "info@freedommergers.com",
+                    emailLink: "mailto:info@freedommergers.com",
+                    schedule: result.booking?.bookingUrl || CALENDLY_LINK,
+                  },
+                },
+              ]);
+            } else {
+              setMessages((prev) => [
+                ...prev,
+                {
+                  role: "bot",
+                  content: result.message || "There was an issue booking. Please try the link below:",
+                  timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                  isError: true,
+                  contactInfo: { schedule: result.fallbackUrl || CALENDLY_LINK },
+                },
+              ]);
+            }
+          } catch (error) {
+            console.error("Booking confirmation error:", error);
+            setMessages((prev) => [
+              ...prev,
+              {
+                role: "bot",
+                content: "Sorry, there was an error booking your meeting. Please try the link below:",
+                timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                isError: true,
+                contactInfo: { schedule: CALENDLY_LINK },
+              },
+            ]);
+          }
+
+          // Reset booking state
+          setConversationMode('normal');
+          setBookingData({ name: "", email: "", timePreference: "", datePreference: "", suggestedTime: null, alternatives: [] });
+          setIsLoading(false);
+          return;
+        } else if (
+          response === 'no' ||
+          response === 'nope' ||
+          response === 'different' ||
+          response === 'change' ||
+          response.includes('another day') ||
+          response.includes('another time') ||
+          response.includes('different day') ||
+          response.includes('different time') ||
+          response.includes('not this') ||
+          response.includes('other time') ||
+          response.includes('other day') ||
+          response.includes('cancel') ||
+          response.includes('reschedule')
+        ) {
+          // User wants a different time - clear date preference and ask again
+          setBookingData({
+            ...bookingData,
+            datePreference: "",
+            suggestedTime: null,
+            alternatives: [],
+          });
+          setConversationMode('booking_time');
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "bot",
+              content: `No problem, ${bookingData.name}! 📅 When would you prefer to schedule your meeting?\n\nYou can say things like:\n• "Tomorrow at 2pm"\n• "Next Monday morning"\n• "Friday afternoon"`,
+              timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            },
+          ]);
+          setIsLoading(false);
+          return;
+        } else {
+          // Treat as a new time preference - CHECK IMMEDIATELY
+          setConversationMode('booking_time');
+          const timePreference = userMessage.trim();
+
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "bot",
+              content: "⏳ Checking availability for that time...",
+              timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            },
+          ]);
+
+          try {
+            const result = await makeApiCall(API_ENDPOINTS.checkAvailability, {
+              timePreference,
+              name: bookingData.name,
+              email: bookingData.email,
+              sessionId,
+            });
+
+            if (result.success) {
+              if (result.needsTime) {
+                setBookingData({
+                  ...bookingData,
+                  datePreference: result.parsedDate
+                });
+
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    role: "bot",
+                    content: result.message || "What time would you like?",
+                    timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                  },
+                ]);
+              }
+              else if (result.available) {
+                setBookingData({
+                  ...bookingData,
+                  timePreference,
+                  datePreference: "",
+                  suggestedTime: result.suggestedTime,
+                  alternatives: result.alternatives || [],
+                });
+                setConversationMode('booking_confirm');
+
+                let confirmMessage = `✅ Perfect! **${result.suggestedTime.formatted}** is available.\n\nShall I book that for you?`;
+
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    role: "bot",
+                    content: confirmMessage,
+                    timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                  },
+                ]);
+              } else if (result.alternatives && result.alternatives.length > 0) {
+                setBookingData({
+                  ...bookingData,
+                  timePreference,
+                  datePreference: "",
+                  suggestedTime: result.alternatives[0],
+                  alternatives: result.alternatives,
+                });
+                setConversationMode('booking_confirm');
+
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    role: "bot",
+                    content: `${result.message}\n\n${result.alternatives.map((alt, i) => `${i + 1}. ${alt.formatted}`).join('\n')}\n\nWhatever works best for you - just type the number or propose another time.`,
+                    timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                  },
+                ]);
+              } else {
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    role: "bot",
+                    content: result.message || "Sorry, I couldn't find available times, but you can check the full calendar here:",
+                    timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                    contactInfo: {
+                      email: "info@freedommergers.com",
+                      emailLink: "mailto:info@freedommergers.com",
+                      schedule: CALENDLY_LINK,
+                    },
+                  },
+                ]);
+                setConversationMode('normal');
+                setBookingData({ name: "", email: "", timePreference: "", datePreference: "", suggestedTime: null, alternatives: [] });
+              }
+            }
+          } catch (error) {
+            console.error("Availability check error:", error);
+            setMessages((prev) => [
+              ...prev,
+              {
+                role: "bot",
+                content: "I'm having trouble checking availability. Would you like to try another time, or book directly?",
+                timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                contactInfo: {
+                  email: "info@freedommergers.com",
+                  emailLink: "mailto:info@freedommergers.com",
+                  schedule: CALENDLY_LINK,
+                },
+              },
+            ]);
+          }
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Normal conversation mode - check for meeting intent
+      if (detectMeetingIntent(userMessage)) {
+        setConversationMode('booking_name');
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "bot",
+            content: "I'd be happy to help you book a meeting with Dave Marshall and our team! 📅\n\n**First, could you please tell me your name?**",
+            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          },
+        ]);
+        setIsLoading(false);
+        return;
+      }
+
+      // Regular chat flow
       const chatData = {
         message: userMessage.trim(),
         sessionId,
@@ -416,7 +1110,7 @@ const Chatbot = () => {
               if (part.trim()) {
                 return (
                   <div key={idx} className="pl-7 text-sm opacity-90">
-                    {formatLinks(part.trim())}
+                    {formatBoldAndLinks(part.trim())}
                   </div>
                 );
               }
@@ -426,8 +1120,28 @@ const Chatbot = () => {
         );
       }
 
-      // For regular text, just format links
-      return <span>{formatLinks(text)}</span>;
+      // For regular text, format bold text and links
+      return <span>{formatBoldAndLinks(text)}</span>;
+    };
+
+    // Function to format bold text (**text**) with clean styling
+    const formatBoldAndLinks = (text: string) => {
+      // Split by bold markers **text**
+      const parts = text.split(/(\*\*[^*]+\*\*)/g);
+
+      return parts.map((part, idx) => {
+        // Check if this is bold text
+        const boldMatch = part.match(/^\*\*([^*]+)\*\*$/);
+        if (boldMatch) {
+          return (
+            <strong key={idx} className="font-bold underline decoration-2 underline-offset-2">
+              {boldMatch[1]}
+            </strong>
+          );
+        }
+        // Regular text - format links
+        return <span key={idx}>{formatLinks(part)}</span>;
+      });
     };
 
     // Function to format links (Calendly, email, etc.)

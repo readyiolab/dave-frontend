@@ -139,37 +139,45 @@ const AISearchSection = () => {
   };
 
   const formatContent = (content) => {
-    // Regex to match emails and various Calendly URLs (handles paths with dots, hyphens, etc.)
-    const linkRegex = /(info@freedommergers\.com|https:\/\/calendly\.com\/[\w.\-\/]+)/g;
-    
-    return content.split(linkRegex).map((part, i) => {
-      if (part === "info@freedommergers.com") {
-        return (
-          <a
-            key={i}
-            href={`mailto:${part}`}
-            className="text-[#be3144] underline font-semibold hover:text-red-700 transition-colors"
-          >
-            {part}
-          </a>
-        );
-      }
-      if (part && part.startsWith("https://calendly.com/")) {
-        return (
-          <a
-            key={i}
-            href={part}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[#be3144] underline font-semibold hover:text-red-700 transition-colors"
-          >
-            Schedule a Consultation
-          </a>
-        );
-      }
-      return part;
-    });
-  };
+  const email = "info@freedommergers.com";
+  const calendly = "https://calendly.com/dave-freedommergers/30min";
+
+  // Regex to extract both email and your specific Calendly link
+  const linkRegex = new RegExp(`(${email}|${calendly})`, "g");
+
+  return content.split(linkRegex).map((part, i) => {
+    // Email clickable
+    if (part === email) {
+      return (
+        <a
+          key={i}
+          href={`mailto:${part}`}
+          className="text-[#be3144] underline font-semibold hover:text-red-700 transition-colors"
+        >
+          {part}
+        </a>
+      );
+    }
+
+    // Calendly clickable
+    if (part === calendly) {
+      return (
+        <a
+          key={i}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[#be3144] underline font-semibold hover:text-red-700 transition-colors"
+        >
+          Schedule a Consultation
+        </a>
+      );
+    }
+
+    return part;
+  });
+};
+
 
   const renderResponse = (text) => {
     // Regex to match emails and various Calendly URLs (handles paths with dots, hyphens, etc.)
@@ -189,7 +197,7 @@ const AISearchSection = () => {
               </a>
             );
           }
-          if (part && part.startsWith("https://calendly.com/")) {
+          if (part && part.startsWith("https://calendly.com/dave-freedommergers/30min")) {
             return (
               <a
                 key={i}

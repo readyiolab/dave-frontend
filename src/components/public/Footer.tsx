@@ -184,13 +184,13 @@ const Footer = () => {
 
         {/* Contact Information */}
         <div className="grid md:grid-cols-3 gap-8 mt-12 pt-12 border-t border-[#d3d6db]/20">
-          <a href="mailto:hello@freedomma.com" className="flex items-center gap-3 hover:text-[#be3144] transition-colors">
+          <a href="mailto:info@freedommergers.com" className="flex items-center gap-3 hover:text-[#be3144] transition-colors">
             <Mail className="w-5 h-5 text-[#be3144]" />
-            <span className="text-[#d3d6db]/80">hello@freedomma.com</span>
+            <span className="text-[#d3d6db]/80">info@freedommergers.com</span>
           </a>
-          <a href="tel:+15551234567" className="flex items-center gap-3 hover:text-[#be3144] transition-colors">
+          <a href="tel:+18453933549" className="flex items-center gap-3 hover:text-[#be3144] transition-colors">
             <Phone className="w-5 h-5 text-[#be3144]" />
-            <span className="text-[#d3d6db]/80">+1 (555) 123-4567</span>
+            <span className="text-[#d3d6db]/80">+1 (845) 393-3549</span>
           </a>
           <div className="flex items-center gap-3">
             <MapPin className="w-5 h-5 text-[#be3144]" />

@@ -25,8 +25,8 @@ const ContactSection = () => {
       icon: Mail,
       title: "Email Us",
       description: "Start your journey with a quick message.",
-      value: "hello@freedomma.com",
-      action: "mailto:hello@freedomma.com",
+      value: "info@freedommergers.com",
+      action: "mailto:info@freedommergers.com",
     },
     {
       icon: Phone,
