@@ -1,9 +1,15 @@
+import SEO from "../common/SEO";
 import HeroSection from "./HeroSection";
 import AboutSection from "./AboutSection";
 
 const About = () => {
   return (
     <div>
+      <SEO
+        title="About Freedom M&A | Mission & Leadership"
+        description="Learn about Freedom M&A's 35-year legacy of helping founders achieve financial freedom through expert mergers, acquisitions, and strategic planning."
+        canonicalUrl="/about"
+      />
       <div id="hero">
         <HeroSection
           title="About Freedom M&A"

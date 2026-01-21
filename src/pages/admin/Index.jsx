@@ -86,7 +86,7 @@ export default function Index() {
               </Card>
 
               {/* Appointments */}
-              <Card className="border-gray-200 shadow-sm bg-green-50">
+              {/* <Card className="border-gray-200 shadow-sm bg-green-50">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-lg font-semibold text-green-900">Appointments</CardTitle>
                 </CardHeader>
@@ -104,7 +104,7 @@ export default function Index() {
                     </div>
                   )}
                 </CardContent>
-              </Card>
+              </Card> */}
 
               {/* Leads */}
               <Card className="border-gray-200 shadow-sm bg-yellow-50">

@@ -134,6 +134,10 @@ const dummyResponses = {
     "Freedom M&A offers over 35 years of experience, a 100% success rate, and 500+ completed deals, focusing on businesses with $50M–$150M in revenue. Our personalized approach, four-step process, and commitment to aligning with your definition of freedom make us the ideal partner for valuations, sales, and mergers.",
 };
 
+import SEO from "../common/SEO";
+
+// ... existing imports ...
+
 const Home = () => {
   const countRefs = useRef([]);
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
@@ -142,6 +146,7 @@ const Home = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Auto-transition testimonials
   // Auto-transition testimonials
   useEffect(() => {
     const interval = setInterval(() => {
@@ -223,6 +228,11 @@ const Home = () => {
 
   return (
     <>
+      <SEO 
+        title="Dave Marshall | M&A Expert & Business Strategist" 
+        description="With 35+ years of experience and 500+ successful deals, Dave Marshall guides founders of $50M–$150M businesses through seamless valuations, mergers, and sales."
+        canonicalUrl="/"
+      />
       <div id="hero">
         <HeroSection
           title="Define Your Path to Ultimate Freedom"

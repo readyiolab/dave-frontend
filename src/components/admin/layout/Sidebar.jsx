@@ -14,7 +14,7 @@ export default function Sidebar({ isSidebarOpen, setIsSidebarOpen }) {
     { path: '/admin/blogs', label: 'Blogs', icon: <FileText className="w-5 h-5" /> },
     ...(isAdmin ? [{ path: '/admin/comments', label: 'Comments', icon: <MessageSquare className="w-5 h-5" /> }] : []),
     { path: '/admin/campaigns', label: 'Email Campaigns', icon: <Mail className="w-5 h-5" /> },
-    { path: '/admin/appointments', label: 'Appointments', icon: <Calendar className="w-5 h-5" /> },
+    // { path: '/admin/appointments', label: 'Appointments', icon: <Calendar className="w-5 h-5" /> },
     {path : '/admin/contacts', label: 'Contact', icon: <Phone className="w-5 h-5" /> },
     // { path: '/admin/metrics', label: 'Metrics', icon: <BarChart className="w-5 h-5" /> },
   ];

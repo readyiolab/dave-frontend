@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Bot, User, MessageCircle, X, Minimize2, Mail, UserPlus } from "lucide-react";
+import { Minimize2, X, MessageCircle, Send, MoreHorizontal, Bot, Mail, Calendar, Phone, Check, Edit2, RefreshCcw, User, UserPlus } from "lucide-react";
 
 const Chatbot = () => {
   const [messages, setMessages] = useState([]);
@@ -21,20 +21,64 @@ const Chatbot = () => {
   const scrollAreaRef = useRef(null);
 
   // Meeting booking conversation flow state - enhanced for Calendly
-  // Meeting booking conversation flow state - enhanced for Calendly
   const [conversationMode, setConversationMode] = useState<
-    'normal' | 'booking_name' | 'booking_email' | 'booking_time' | 'booking_confirm'
+    'normal' | 'booking_name' | 'booking_email' | 'booking_phone' | 'booking_confirm_details' | 'booking_time' | 'booking_confirm'
   >('normal');
   const [bookingData, setBookingData] = useState({
     name: "",
     email: "",
+    phone: "",
     timePreference: "",
     datePreference: "",
     suggestedTime: null as { startTime: string; formatted: string } | null,
     alternatives: [] as { startTime: string; formatted: string }[],
   });
 
-  const API_BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:3000").replace(/\/api$/, '');
+  // Quick reply suggestions based on conversation mode
+  const getQuickReplies = (): string[] => {
+    switch (conversationMode) {
+      case 'normal':
+        return ['📅 Book a Meeting', '💼 Learn about M&A', '📊 Business Valuation', '🎯 Exit Strategy'];
+      case 'booking_name':
+        return [];
+      case 'booking_email':
+        return [];
+      case 'booking_phone':
+        return ['Skip (no phone)'];
+      case 'booking_confirm_details':
+        return [' Yes, correct', ' Change details'];
+      case 'booking_time':
+        // Generate dynamic date suggestions for the next few days
+        const suggestions = ['Show slots', 'Tomorrow 10am', 'Next Monday'];
+        const today = new Date();
+        for (let i = 2; i <= 4; i++) {
+          const nextDate = new Date(today);
+          nextDate.setDate(today.getDate() + i);
+          const dateStr = nextDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short' }); // "25 Jan"
+          suggestions.push(`on ${dateStr}`);
+        }
+        return suggestions;
+      case 'booking_confirm':
+        return [' Yes, book it!', '🔄 Choose different time'];
+      default:
+        return [];
+    }
+  };
+
+  // Handle quick reply click - auto submit the reply
+  const handleQuickReply = (reply: string) => {
+    const cleanReply = reply.replace(/^[\u{1F300}-\u{1F9FF}]\s*/u, ''); // Remove emoji prefix
+    setInput(cleanReply);
+    // Trigger form submission after state update
+    setTimeout(() => {
+      const inputElement = document.querySelector('input[aria-label="Type your message"]') as HTMLInputElement;
+      if (inputElement) {
+        inputElement.form?.dispatchEvent(new Event('submit', { bubbles: true }));
+      }
+    }, 50);
+  };
+
+  const API_BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:9000").replace(/\/api$/, '');
   const API_ENDPOINTS = {
     chat: `${API_BASE_URL}/api/ai-chat/chat`,
     search: `${API_BASE_URL}/api/ai-chat/search`,
@@ -301,14 +345,120 @@ const Chatbot = () => {
           return;
         }
 
-        // Save email and ask for time preference
+        // Save email and ask for phone number
         setBookingData({ ...bookingData, email });
-        setConversationMode('booking_time');
+        setConversationMode('booking_phone');
         setMessages((prev) => [
           ...prev,
           {
             role: "bot",
-            content: `Thanks, ${bookingData.name}! 📅 **When would you like to schedule your meeting?**\n\nYou can say things like:\n• "Tomorrow at 2pm"\n• "Next Monday morning"\n• "Friday afternoon"`,
+            content: `Thanks, ${bookingData.name}! 📱 **What's your phone number?** (optional - for callback purposes)\n\nYou can type "skip" if you prefer not to share.`,
+            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          },
+        ]);
+        setIsLoading(false);
+        return;
+      }
+
+      if (conversationMode === 'booking_phone') {
+        // User is providing their phone number or skipping
+        const phoneInput = userMessage.trim().toLowerCase();
+
+        // Check for skip
+        if (phoneInput === 'skip' || phoneInput.includes('no phone') || phoneInput === 'no' || phoneInput === 'skip (no phone)') {
+          setBookingData({ ...bookingData, phone: '' });
+        } else {
+          // Validate phone number (basic validation)
+          const phoneClean = userMessage.replace(/[\s\-\(\)]/g, '');
+          const phoneRegex = /^[\+]?[\d]{7,15}$/;
+
+          if (!phoneRegex.test(phoneClean)) {
+            setMessages((prev) => [
+              ...prev,
+              {
+                role: "bot",
+                content: "That doesn't look like a valid phone number. Please enter a valid number (e.g., +1234567890) or type \"skip\" to continue without one.",
+                timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+              },
+            ]);
+            setIsLoading(false);
+            return;
+          }
+          setBookingData(prev => ({ ...prev, phone: userMessage.trim() }));
+        }
+
+        // Move to confirmation of details
+        setConversationMode('booking_confirm_details');
+        const phoneDisplay = phoneInput === 'skip' || phoneInput.includes('no phone') || phoneInput === 'no' ? 'Not provided' : userMessage.trim();
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "bot",
+            content: `📋 **Please confirm your details:**\n\n• **Name:** ${bookingData.name}\n• **Email:** ${bookingData.email}\n• **Phone:** ${phoneDisplay}\n\n**Is this information correct?**`,
+            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          },
+        ]);
+        setIsLoading(false);
+        return;
+      }
+
+      if (conversationMode === 'booking_confirm_details') {
+        const response = userMessage.trim().toLowerCase();
+
+        // Check if user confirms
+        // Normalize response to remove emojis and whitespace
+        const cleanResponse = response.replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim().toLowerCase();
+
+        if (cleanResponse === 'yes' || cleanResponse === 'correct' || cleanResponse === 'yes, correct' || cleanResponse === 'yes correct' || cleanResponse === 'ok' || cleanResponse === 'confirmed' || cleanResponse === 'looks good') {
+          setConversationMode('booking_time');
+
+          // Silently save lead to database
+          fetch(API_ENDPOINTS.collectLead, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: bookingData.name,
+              email: bookingData.email,
+              phone: bookingData.phone,
+              sessionId: sessionId
+            })
+          }).catch(err => console.error("Background lead save failed", err));
+
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "bot",
+              content: `Perfect! ✅ Details confirmed.\n\n📅 **When would you like to schedule your meeting with Dave Marshall?**\n\nYou can say things like:\n• "Tomorrow at 2pm"\n• "Next Monday morning"\n• "Friday afternoon"`,
+              timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            },
+          ]);
+          setIsLoading(false);
+          return;
+        }
+
+        // Check if user wants to change
+        if (response === 'no' || response === 'change' || response === 'change details' || response === 'edit' || response === 'wrong' || response === 'incorrect') {
+          // Reset booking and start over
+          setBookingData({ name: "", email: "", phone: "", timePreference: "", datePreference: "", suggestedTime: null, alternatives: [] });
+          setConversationMode('booking_name');
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "bot",
+              content: "No problem! Let's start again. 📝 **What is your name?**",
+              timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            },
+          ]);
+          setIsLoading(false);
+          return;
+        }
+
+        // Didn't understand - ask again
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "bot",
+            content: `I didn't catch that. Please say **"yes"** if the details are correct, or **"change"** if you'd like to update them.\n\n• **Name:** ${bookingData.name}\n• **Email:** ${bookingData.email}\n• **Phone:** ${bookingData.phone || 'Not provided'}`,
             timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
           },
         ]);
@@ -393,12 +543,28 @@ const Chatbot = () => {
           return;
         }
 
-        // If we already have a date pending, combine it with this new time input
-        if (bookingData.datePreference) {
+        // Helper to check if input mentions a date specifically (to avoid prepending old date)
+        const mentionsDate = (msg: string): boolean => {
+          const dateKeywords = [
+            'today', 'tomorrow', 'tmrw', 'monday', 'tuesday', 'wednesday',
+            'thursday', 'friday', 'saturday', 'sunday', 'mon', 'tue', 'wed', 'thu', 'fri',
+            'sat', 'sun', 'next week', 'day after', 'jan', 'feb', 'mar', 'apr', 'may', 'jun',
+            'jul', 'aug', 'sep', 'oct', 'nov', 'dec', 'January', 'February', 'March', 'April',
+            'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December',
+            ' on '
+          ];
+          return dateKeywords.some(kw => msg.toLowerCase().includes(kw.toLowerCase()));
+        };
+
+        // If we already have a date pending, AND user didn't provide a new date, combine it
+        if (bookingData.datePreference && !mentionsDate(userMessage)) {
           // e.g., "Answer: 2pm" -> combined with date "2026-01-20"
           const dateObj = new Date(bookingData.datePreference);
           const dateStr = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
           timePreference = `on ${dateStr} at ${userMessage.trim()}`;
+        } else if (mentionsDate(userMessage)) {
+          // User provided a new date, so we should CLEAR the old preference to avoid confusion
+          // But state updates are async, so we just rely on parsing the new message.
         }
 
         setMessages((prev) => [
@@ -413,12 +579,56 @@ const Chatbot = () => {
         try {
           const result = await makeApiCall(API_ENDPOINTS.checkAvailability, {
             timePreference,
+            datePreference: bookingData.datePreference, // Send parsed date preference if any
             name: bookingData.name,
             email: bookingData.email,
             sessionId,
           });
 
           if (result.success) {
+            // Check if backend returned available slots to display
+            if (result.showSlots && result.slots && result.slots.length > 0) {
+              // Display slots as clickable options
+              setBookingData({
+                ...bookingData,
+                phone: bookingData.phone || "", // Fix lint error
+                alternatives: result.slots,
+              });
+              setConversationMode('booking_confirm');
+
+              setMessages((prev) => [
+                ...prev,
+                {
+                  role: "bot",
+                  content: result.message,
+                  timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                  showSlotButtons: true,
+                  slots: result.slots,
+                },
+              ]);
+              setIsLoading(false);
+              return;
+            }
+
+            if (result.showSlots && (!result.slots || result.slots.length === 0)) {
+              // No slots available
+              setMessages((prev) => [
+                ...prev,
+                {
+                  role: "bot",
+                  content: result.message || "No available slots found. Please try the booking link.",
+                  timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                  contactInfo: {
+                    email: "info@freedommergers.com",
+                    emailLink: "mailto:info@freedommergers.com",
+                    schedule: result.fallbackUrl || CALENDLY_LINK,
+                  },
+                },
+              ]);
+              setIsLoading(false);
+              return;
+            }
+
             if (result.needsTime) {
               // Backend recognized the date but needs a specific time
               setBookingData({
@@ -493,7 +703,7 @@ const Chatbot = () => {
               ]);
               // Reset and go back to normal
               setConversationMode('normal');
-              setBookingData({ name: "", email: "", timePreference: "", datePreference: "", suggestedTime: null, alternatives: [] });
+              setBookingData({ name: "", email: "", phone: "", timePreference: "", datePreference: "", suggestedTime: null, alternatives: [] });
             }
           } else {
             // Handle specific failure reasons
@@ -545,7 +755,7 @@ const Chatbot = () => {
             ]);
             // Reset and go back to normal
             setConversationMode('normal');
-            setBookingData({ name: "", email: "", timePreference: "", datePreference: "", suggestedTime: null, alternatives: [] });
+            setBookingData({ name: "", email: "", phone: "", timePreference: "", datePreference: "", suggestedTime: null, alternatives: [] });
           }
         } catch (error) {
           console.error("Availability check error:", error);
@@ -600,7 +810,7 @@ const Chatbot = () => {
               },
             ]);
             setConversationMode('normal');
-            setBookingData({ name: "", email: "", timePreference: "", datePreference: "", suggestedTime: null, alternatives: [] });
+            setBookingData({ name: "", email: "", phone: "", timePreference: "", datePreference: "", suggestedTime: null, alternatives: [] });
             setIsLoading(false);
             return;
           }
@@ -668,7 +878,7 @@ const Chatbot = () => {
 
           // Reset booking state
           setConversationMode('normal');
-          setBookingData({ name: "", email: "", timePreference: "", datePreference: "", suggestedTime: null, alternatives: [] });
+          setBookingData({ name: "", email: "", phone: "", timePreference: "", datePreference: "", suggestedTime: null, alternatives: [] });
           setIsLoading(false);
           return;
         } else if (
@@ -721,13 +931,34 @@ const Chatbot = () => {
           try {
             const result = await makeApiCall(API_ENDPOINTS.checkAvailability, {
               timePreference,
+              datePreference: bookingData.datePreference,
               name: bookingData.name,
               email: bookingData.email,
               sessionId,
             });
 
             if (result.success) {
-              if (result.needsTime) {
+              // Check if backend returned available slots to display (Show Slots / Specific Date Slots)
+              if (result.showSlots && result.slots && result.slots.length > 0) {
+                setBookingData({
+                  ...bookingData,
+                  phone: bookingData.phone || "",
+                  alternatives: result.slots,
+                });
+                // Mode remains booking_confirm as we are showing slots
+
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    role: "bot",
+                    content: result.message,
+                    timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                    showSlotButtons: true,
+                    slots: result.slots,
+                  },
+                ]);
+              }
+              else if (result.needsTime) {
                 setBookingData({
                   ...bookingData,
                   datePreference: result.parsedDate
@@ -795,7 +1026,7 @@ const Chatbot = () => {
                   },
                 ]);
                 setConversationMode('normal');
-                setBookingData({ name: "", email: "", timePreference: "", datePreference: "", suggestedTime: null, alternatives: [] });
+                setBookingData({ name: "", email: "", phone: "", timePreference: "", datePreference: "", suggestedTime: null, alternatives: [] });
               }
             }
           } catch (error) {
@@ -1051,6 +1282,12 @@ const Chatbot = () => {
     setShowLeadForm(true);
   };
 
+  const minimizeChat = () => {
+    setIsMinimized(true);
+    setShowLeadForm(false);
+  };
+
+  const maximizeChat = () => setIsMinimized(false);
   const toggleChat = () => {
     setIsOpen(!isOpen);
     setIsMinimized(false);
@@ -1070,13 +1307,17 @@ const Chatbot = () => {
     }
   };
 
-  const minimizeChat = () => {
-    setIsMinimized(true);
-    setShowLeadForm(false);
-  };
-
-  const maximizeChat = () => {
-    setIsMinimized(false);
+  // Reset chat function
+  const resetChat = () => {
+    setMessages([{
+      role: 'bot',
+      content: "Hello! How can I assist you today? If you have any questions about mergers, acquisitions, or financial services, feel free to ask! For more detailed guidance, I recommend scheduling a consultation with Dave Marshall and our team: 📅 [Schedule Consultation](https://calendly.com/dave-freedommergers/30min)",
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }]);
+    setBookingData({ name: "", email: "", phone: "", timePreference: "", datePreference: "", suggestedTime: null, alternatives: [] });
+    setConversationMode('normal');
+    setLeadInfo({ name: "", email: "", phone: "" }); // Reset leadInfo as well
+    setInput("");
   };
 
   const renderMessageContent = (message) => {
@@ -1211,6 +1452,38 @@ const Chatbot = () => {
       );
     }
 
+    // Render slot buttons if showSlotButtons is true
+    if (message.showSlotButtons && message.slots && message.slots.length > 0) {
+      return (
+        <div className="space-y-3">
+          <div className="leading-relaxed break-words">{formatText(content)}</div>
+          <div className="flex flex-col gap-2 pt-2">
+            {message.slots.map((slot: { startTime: string; formatted: string }, idx: number) => (
+              <button
+                key={idx}
+                onClick={() => {
+                  setBookingData({
+                    ...bookingData,
+                    suggestedTime: slot,
+                  });
+                  setInput(`${idx + 1}`);
+                  setTimeout(() => {
+                    handleSendMessage({ preventDefault: () => { } } as React.FormEvent);
+                  }, 100);
+                }}
+                className="w-full text-left px-4 py-3 bg-[#be3144] text-white rounded-xl hover:bg-[#a12b3b] transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-between group"
+              >
+                <span className="font-medium">{slot.formatted}</span>
+                <span className="text-xs bg-white bg-opacity-20 px-2 py-1 rounded-full group-hover:bg-opacity-30">
+                  Click to book
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="leading-relaxed break-words">
         {formatText(content)}
@@ -1240,7 +1513,10 @@ const Chatbot = () => {
 
       {isOpen && (
         <div
-          className={`fixed bottom-20 right-4 bg-[#d3d6db] border border-[#303841] rounded-2xl shadow-2xl transition-all duration-300 ease-in-out overflow-hidden z-[9998] ${isMinimized ? "w-80 h-16" : "w-96 h-[500px]"
+          className={`fixed flex flex-col bg-[#d3d6db] border border-[#303841] shadow-2xl transition-all duration-300 ease-in-out overflow-hidden z-[9998] 
+            ${isMinimized
+              ? "bottom-20 right-4 w-80 h-16 rounded-2xl"
+              : "bottom-0 right-0 w-full h-full sm:bottom-20 sm:right-4 sm:w-96 sm:h-[500px] sm:rounded-2xl rounded-none"
             }`}
         >
           <div className="flex-shrink-0 p-4 border-b bg-[#3a4750] rounded-t-2xl flex justify-between items-center h-16">
@@ -1272,6 +1548,15 @@ const Chatbot = () => {
               <Button
                 variant="ghost"
                 size="sm"
+                onClick={resetChat}
+                className="text-white hover:text-[#d3d6db] hover:bg-[#303841] rounded-full w-8 h-8"
+                aria-label="Restart chat"
+              >
+                <RefreshCcw className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={toggleChat}
                 className="text-white hover:text-[#d3d6db] hover:bg-[#303841] rounded-full w-8 h-8"
                 aria-label="Close chatbot"
@@ -1282,7 +1567,7 @@ const Chatbot = () => {
           </div>
 
           {!isMinimized && (
-            <>
+            <div className="flex-1 flex flex-col overflow-hidden">
               {showLeadForm && (
                 <div className="absolute inset-0 bg-[#d3d6db] z-10 p-4 flex flex-col">
                   <div className="flex justify-between items-center mb-4 mt-12">
@@ -1376,7 +1661,7 @@ const Chatbot = () => {
                 </div>
               )}
 
-              <div className="h-[356px] overflow-hidden">
+              <div className="flex-1 sm:h-[356px] overflow-hidden">
                 <ScrollArea className="h-full w-full" ref={scrollAreaRef}>
                   <div className="p-4 space-y-4">
                     {messages.map((message, index) => (
@@ -1459,6 +1744,21 @@ const Chatbot = () => {
                 </ScrollArea>
               </div>
 
+              {/* Quick Reply Suggestions */}
+              {getQuickReplies().length > 0 && !isLoading && (
+                <div className="px-4 py-2 border-t bg-[#e8eaec] flex flex-wrap gap-2">
+                  {getQuickReplies().map((reply, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleQuickReply(reply)}
+                      className="text-xs px-3 py-1.5 bg-white border border-[#303841] text-[#303841] rounded-full hover:bg-[#be3144] hover:text-white hover:border-[#be3144] transition-all duration-200 shadow-sm"
+                    >
+                      {reply}
+                    </button>
+                  ))}
+                </div>
+              )}
+
               <div className="flex-shrink-0 p-4 border-t bg-[#d3d6db] rounded-b-2xl h-20">
                 <div className="flex gap-3 items-center h-full">
                   <div className="flex-1">
@@ -1489,7 +1789,7 @@ const Chatbot = () => {
                   </Button>
                 </div>
               </div>
-            </>
+            </div>
           )}
         </div>
       )}

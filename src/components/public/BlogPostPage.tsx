@@ -2,12 +2,37 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Calendar, Clock, User, Send, Share2, Heart, MessageSquare } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Helmet } from 'react-helmet';
 import { getBlogById, getCommentsByBlogId, createComment, getAllBlogs } from '../lib/api';
+import SEO from "../common/SEO";
 
+interface BlogPost {
+  id: string | number;
+  title: string;
+  slug: string;
+  excerpt: string;
+  meta_description: string;
+  content: any; // content can be string or object from editorjs
+  image: string;
+  author: string;
+  author_bio: string;
+  read_time: number | string;
+  category: string;
+  tags: string[];
+  is_featured: number;
+  comments_count: number;
+  likes: number;
+  shares: number;
+  created_at: string;
+}
 
+interface Comment {
+  id: string | number;
+  user_name: string;
+  content: string;
+  created_at: string;
+}
 
-const editorJSToHtml = (content: string | { blocks: any[] }): string => {
+const editorJSToHtml = (content: any): string => {
   if (typeof content === "string") {
     try {
       content = JSON.parse(content);
@@ -22,26 +47,24 @@ const editorJSToHtml = (content: string | { blocks: any[] }): string => {
   }
 
   return content.blocks
-    .map((block) => {
+    .map((block: any) => {
       switch (block.type) {
         case "paragraph":
           return `<p class="text-gray-700 leading-relaxed mb-4">${block.data.text || ""}</p>`;
 
         case "header":
           const level = block.data.level || 2;
-          return `<h${level} class="text-gray-800 font-bold mt-6 mb-3 ${
-            level === 1 ? "text-3xl" : level === 2 ? "text-2xl" : "text-xl"
-          }">${block.data.text || ""}</h${level}>`;
+          return `<h${level} class="text-gray-800 font-bold mt-6 mb-3 ${level === 1 ? "text-3xl" : level === 2 ? "text-2xl" : "text-xl"
+            }">${block.data.text || ""}</h${level}>`;
 
         case "list":
           const tag = block.data.style === "ordered" ? "ol" : "ul";
           const items = (block.data.items || [])
-            .map((item) => `<li class="text-gray-700 mb-1">${item}</li>`)
+            .map((item: string) => `<li class="text-gray-700 mb-1">${item}</li>`)
             .join("");
           return items
-            ? `<${tag} class="list-${
-                block.data.style === "ordered" ? "decimal" : "disc"
-              } pl-6 my-4">${items}</${tag}>`
+            ? `<${tag} class="list-${block.data.style === "ordered" ? "decimal" : "disc"
+            } pl-6 my-4">${items}</${tag}>`
             : "";
 
         case "checklist":
@@ -49,11 +72,10 @@ const editorJSToHtml = (content: string | { blocks: any[] }): string => {
             `<ul class="my-4">` +
             block.data.items
               .map(
-                (item) =>
+                (item: any) =>
                   `<li class="flex items-center mb-2">
-                      <input type="checkbox" disabled ${
-                        item.checked ? "checked" : ""
-                      } class="mr-2"/>
+                      <input type="checkbox" disabled ${item.checked ? "checked" : ""
+                  } class="mr-2"/>
                       <span>${item.text}</span>
                   </li>`
               )
@@ -64,9 +86,8 @@ const editorJSToHtml = (content: string | { blocks: any[] }): string => {
         case "quote":
           return `<blockquote class="border-l-4 border-gray-300 pl-4 italic text-gray-600 my-4">
                     ${block.data.text || ""}
-                    <footer class="mt-2 text-sm text-gray-500">— ${
-                      block.data.caption || ""
-                    }</footer>
+                    <footer class="mt-2 text-sm text-gray-500">— ${block.data.caption || ""
+            }</footer>
                   </blockquote>`;
 
         case "code":
@@ -79,15 +100,14 @@ const editorJSToHtml = (content: string | { blocks: any[] }): string => {
                       src="${block.data.embed}"
                       frameborder="0"
                       allowfullscreen></iframe>
-                    <p class="text-center text-sm text-gray-500 mt-2">${
-                      block.data.caption || ""
-                    }</p>
+                    <p class="text-center text-sm text-gray-500 mt-2">${block.data.caption || ""
+            }</p>
                   </div>`;
 
         case "table":
           const rows = block.data.content
             .map(
-              (row) =>
+              (row: string[]) =>
                 `<tr>${row
                   .map(
                     (cell) =>
@@ -107,9 +127,8 @@ const editorJSToHtml = (content: string | { blocks: any[] }): string => {
                     <img src="${block.data.file?.url || ""}" 
                          alt="${block.data.caption || "Image"}" 
                          class="w-full max-w-xl h-auto rounded-xl shadow-md mx-auto object-cover" />
-                    <figcaption class="text-center text-sm text-gray-600 mt-2">${
-                      block.data.caption || ""
-                    }</figcaption>
+                    <figcaption class="text-center text-sm text-gray-600 mt-2">${block.data.caption || ""
+            }</figcaption>
                   </figure>`;
 
         case "raw":
@@ -202,16 +221,16 @@ const BlogPostPage: React.FC = () => {
         const { data: allBlogs } = await getAllBlogs();
         const related = allBlogs
           .filter(
-            (p: BlogPost) =>
+            (p: any) =>
               p.id !== postData.id &&
               (typeof p.category === 'string'
-                ? p.category.split(',').some((cat) => postData.category.split(',').includes(cat))
+                ? p.category.split(',').some((cat: string) => postData.category.includes(cat))
                 : Array.isArray(p.category)
-                  ? p.category.some((cat) => postData.category.includes(cat))
+                  ? p.category.some((cat: string) => postData.category.includes(cat))
                   : false)
           )
           .slice(0, 3)
-          .map((p: BlogPost) => ({
+          .map((p: any) => ({
             ...p,
             category: typeof p.category === 'string'
               ? p.category.split(',')[0] || 'Uncategorized'
@@ -364,10 +383,13 @@ const BlogPostPage: React.FC = () => {
         />
       </div>
 
-      <Helmet>
-        <title>{post.title} | Freedom M&A Blog</title>
-        <meta name="description" content={post.meta_description || post.excerpt} />
-      </Helmet>
+      <SEO
+        title={`${post.title} | Freedom M&A Blog`}
+        description={post.meta_description || post.excerpt}
+        canonicalUrl={`/blog/${post.slug}`}
+        ogImage={post.image}
+        ogType="article"
+      />
 
       <section className="pb-10 bg-white">
         <div className="container mx-auto max-w-5xl px-4">
