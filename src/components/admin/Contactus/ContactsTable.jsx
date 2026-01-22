@@ -8,6 +8,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 
 const ContactsTable = ({ contacts, page, pageSize, total, setPage }) => {
   console.log('ContactsTable props:', { contacts, page, pageSize, total }); // Debug log
@@ -61,25 +69,49 @@ const ContactsTable = ({ contacts, page, pageSize, total, setPage }) => {
         <div className="text-sm text-gray-600">
           Showing {((page - 1) * pageSize) + 1} to {Math.min(page * pageSize, total)} of {total} contacts
         </div>
-        <div className="flex space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(page - 1)}
-            disabled={page === 1}
-            className="px-3 py-1"
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePageChange(page + 1)}
-            disabled={page === totalPages}
-            className="px-3 py-1"
-          >
-            Next
-          </Button>
+        <div className="flex items-center justify-end">
+          {totalPages > 1 && (
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                     onClick={() => setPage(page > 1 ? page - 1 : 1)}
+                     className={`cursor-pointer ${page === 1 ? 'pointer-events-none opacity-50' : 'hover:bg-gray-100'}`}
+                  />
+                </PaginationItem>
+                {[...Array(Math.min(5, totalPages))].map((_, i) => {
+                  let pageNumber;
+                  if (totalPages <= 5) {
+                    pageNumber = i + 1;
+                  } else if (page <= 3) {
+                    pageNumber = i + 1;
+                  } else if (page >= totalPages - 2) {
+                    pageNumber = totalPages - 4 + i;
+                  } else {
+                    pageNumber = page - 2 + i;
+                  }
+                  
+                  return (
+                    <PaginationItem key={pageNumber}>
+                      <PaginationLink
+                        onClick={() => setPage(pageNumber)}
+                        isActive={page === pageNumber}
+                        className={`cursor-pointer ${page === pageNumber ? 'bg-gray-900 text-white hover:bg-gray-800' : 'hover:bg-gray-100'}`}
+                      >
+                        {pageNumber}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                })}
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => setPage(page < totalPages ? page + 1 : totalPages)}
+                    className={`cursor-pointer ${page === totalPages ? 'pointer-events-none opacity-50' : 'hover:bg-gray-100'}`}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
         </div>
       </div>
     </div>

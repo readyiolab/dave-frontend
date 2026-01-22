@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/pagination';
 import { Eye, User, Mail, Phone, Tag, MessageSquare, Calendar, Activity } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export default function LeadsTable({ leads, page, pageSize, total, setPage }) {
   const dispatch = useDispatch();
@@ -31,20 +32,8 @@ export default function LeadsTable({ leads, page, pageSize, total, setPage }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const handleSelectLead = async (lead) => {
+  const handleSelectLead = (lead) => {
     dispatch(setSelectedLead(lead));
-    try {
-      // Remove the duplicate /api - the api instance should already handle the base path
-      const response = await api.get(`/leads/interactions/${lead.id}`);
-      dispatch(setInteractions(response.data));
-    } catch (err) {
-      console.error('Error fetching interactions:', err);
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch interactions',
-        variant: 'destructive',
-      });
-    }
   };
 
   const getStatusBadge = (status) => {
@@ -93,9 +82,17 @@ export default function LeadsTable({ leads, page, pageSize, total, setPage }) {
             {leads.map((lead) => (
               <TableRow key={lead.id} className="hover:bg-gray-50 transition-colors">
                 <TableCell className="text-sm text-gray-900">
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-gray-500" />
-                    <span className="truncate">{lead.name}</span>
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-9 w-9 border-2 border-white shadow-sm">
+                      <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${lead.name}`} alt={lead.name} />
+                      <AvatarFallback className="bg-blue-100 text-blue-700 font-medium">
+                        {lead.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col">
+                      <span className="font-semibold text-gray-900">{lead.name}</span>
+                      <span className="text-xs text-gray-500 md:hidden">{lead.email}</span>
+                    </div>
                   </div>
                   {/* Stacked info for mobile */}
                   <div className="mt-2 space-y-1 sm:hidden">
@@ -134,35 +131,35 @@ export default function LeadsTable({ leads, page, pageSize, total, setPage }) {
                     <div>{getStatusBadge(lead.status)}</div>
                   </div>
                 </TableCell>
-                <TableCell className="text-sm text-gray-900 hidden md:table-cell">
+                <TableCell className="text-sm text-gray-900 hidden md:table-cell whitespace-nowrap">
                   <div className="flex items-center gap-2">
                     <Mail className="h-4 w-4 text-gray-500" />
                     <span className="truncate max-w-[200px]">{lead.email}</span>
                   </div>
                 </TableCell>
-                <TableCell className="text-sm text-gray-900 hidden lg:table-cell">
+                <TableCell className="text-sm text-gray-900 hidden lg:table-cell whitespace-nowrap">
                   <div className="flex items-center gap-2">
                     <Phone className="h-4 w-4 text-gray-500" />
                     {lead.phone || 'N/A'}
                   </div>
                 </TableCell>
-                <TableCell className="text-sm text-gray-900 hidden md:table-cell">
+                <TableCell className="text-sm text-gray-900 hidden md:table-cell whitespace-nowrap">
                   <div className="flex items-center gap-2">
                     <Tag className="h-4 w-4 text-gray-500" />
                     {lead.segment}
                   </div>
                 </TableCell>
-                <TableCell className="text-sm text-gray-900 hidden xl:table-cell">
+                <TableCell className="text-sm text-gray-900 hidden xl:table-cell max-w-[200px]">
                   {lead.interest && (
                     <div className="flex items-center gap-2">
-                      <MessageSquare className="h-4 w-4 text-gray-500" />
-                      <span className="truncate max-w-[150px]" title={lead.interest}>
+                      <MessageSquare className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                      <span className="truncate" title={lead.interest}>
                         {lead.interest}
                       </span>
                     </div>
                   )}
                 </TableCell>
-                <TableCell className="text-sm text-gray-900 hidden lg:table-cell">
+                <TableCell className="text-sm text-gray-900 hidden lg:table-cell whitespace-nowrap">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-gray-500" />
                     <span className="text-xs">{formatDate(lead.created_at)}</span>
@@ -174,7 +171,7 @@ export default function LeadsTable({ leads, page, pageSize, total, setPage }) {
                     </div>
                   )}
                 </TableCell>
-                <TableCell className="text-sm text-gray-900 hidden sm:table-cell">
+                <TableCell className="text-sm text-gray-900 hidden sm:table-cell whitespace-nowrap">
                   {getStatusBadge(lead.status)}
                 </TableCell>
                 <TableCell className="text-right">

@@ -26,6 +26,8 @@ const NewslettersPage = lazy(() => import("./pages/admin/NewslettersPage"));
 const AppointmentsPage = lazy(() => import("./pages/admin/AppointmentsPage"));
 const ContactsPage = lazy(() => import("./pages/admin/ContactsPage"));
 const EmailCampaignsPage = lazy(() => import("./pages/admin/EmailCampaignsPage"));
+const VoiceCallsPage = lazy(() => import("./pages/admin/VoiceCallsPage"));
+const ChatPage = lazy(() => import("./pages/admin/ChatPage"));
 const MetricsPage = lazy(() => import("./pages/admin/MetricsPage"));
 const UnsubscribePage = lazy(() => import("./pages/public/UnsubscribePage"));
 const NotFound = lazy(() => import("./components/public/NotFound"));
@@ -77,6 +79,8 @@ export default function App() {
               <Route path="appointments" element={<AppointmentsPage />} />
               <Route path="contacts" element={<ContactsPage />} />
               <Route path="campaigns" element={<EmailCampaignsPage />} />
+              <Route path="voice-calls" element={<VoiceCallsPage />} />
+              <Route path="chat" element={<ChatPage />} />
               <Route path="metrics" element={<MetricsPage />} />
             </Route>
             <Route element={<PublicLayout />}>

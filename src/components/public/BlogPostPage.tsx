@@ -32,6 +32,24 @@ interface Comment {
   created_at: string;
 }
 
+// Helper to safely extract text from potential objects/arrays
+// Helper to safely extract text from potential objects/arrays
+const safeText = (text: any): string => {
+  if (typeof text === 'string') return text;
+  if (typeof text === 'number') return String(text);
+  if (!text) return '';
+  if (typeof text === 'object') {
+    // Check for common EditorJS item properties
+    if (text.content) return safeText(text.content);
+    if (text.text) return safeText(text.text);
+
+    // Fallback: mostly it's better to return empty string than JSON for display
+    // console.warn('Received object for text rendering:', text);
+    return '';
+  }
+  return '';
+};
+
 const editorJSToHtml = (content: any): string => {
   if (typeof content === "string") {
     try {
@@ -50,17 +68,17 @@ const editorJSToHtml = (content: any): string => {
     .map((block: any) => {
       switch (block.type) {
         case "paragraph":
-          return `<p class="text-gray-700 leading-relaxed mb-4">${block.data.text || ""}</p>`;
+          return `<p class="text-gray-700 leading-relaxed mb-4">${safeText(block.data.text)}</p>`;
 
         case "header":
           const level = block.data.level || 2;
           return `<h${level} class="text-gray-800 font-bold mt-6 mb-3 ${level === 1 ? "text-3xl" : level === 2 ? "text-2xl" : "text-xl"
-            }">${block.data.text || ""}</h${level}>`;
+            }">${safeText(block.data.text)}</h${level}>`;
 
         case "list":
           const tag = block.data.style === "ordered" ? "ol" : "ul";
           const items = (block.data.items || [])
-            .map((item: string) => `<li class="text-gray-700 mb-1">${item}</li>`)
+            .map((item: string) => `<li class="text-gray-700 mb-1">${safeText(item)}</li>`)
             .join("");
           return items
             ? `<${tag} class="list-${block.data.style === "ordered" ? "decimal" : "disc"
@@ -76,7 +94,7 @@ const editorJSToHtml = (content: any): string => {
                   `<li class="flex items-center mb-2">
                       <input type="checkbox" disabled ${item.checked ? "checked" : ""
                   } class="mr-2"/>
-                      <span>${item.text}</span>
+                      <span>${safeText(item.text)}</span>
                   </li>`
               )
               .join("") +
@@ -85,14 +103,12 @@ const editorJSToHtml = (content: any): string => {
 
         case "quote":
           return `<blockquote class="border-l-4 border-gray-300 pl-4 italic text-gray-600 my-4">
-                    ${block.data.text || ""}
-                    <footer class="mt-2 text-sm text-gray-500">— ${block.data.caption || ""
-            }</footer>
+                    ${safeText(block.data.text)}
+                    <footer class="mt-2 text-sm text-gray-500">— ${safeText(block.data.caption)}</footer>
                   </blockquote>`;
 
         case "code":
-          return `<pre class="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto my-4"><code>${block.data.code ||
-            ""}</code></pre>`;
+          return `<pre class="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto my-4"><code>${safeText(block.data.code)}</code></pre>`;
 
         case "embed":
           return `<div class="my-6">
@@ -100,18 +116,17 @@ const editorJSToHtml = (content: any): string => {
                       src="${block.data.embed}"
                       frameborder="0"
                       allowfullscreen></iframe>
-                    <p class="text-center text-sm text-gray-500 mt-2">${block.data.caption || ""
-            }</p>
+                    <p class="text-center text-sm text-gray-500 mt-2">${safeText(block.data.caption)}</p>
                   </div>`;
 
         case "table":
           const rows = block.data.content
             .map(
-              (row: string[]) =>
+              (row: any[]) =>
                 `<tr>${row
                   .map(
-                    (cell) =>
-                      `<td class="border px-3 py-2 text-gray-700">${cell}</td>`
+                    (cell: any) =>
+                      `<td class="border px-3 py-2 text-gray-700">${safeText(cell)}</td>`
                   )
                   .join("")}</tr>`
             )
@@ -125,20 +140,19 @@ const editorJSToHtml = (content: any): string => {
         case "image":
           return `<figure class="my-6">
                     <img src="${block.data.file?.url || ""}" 
-                         alt="${block.data.caption || "Image"}" 
+                         alt="${safeText(block.data.caption) || "Image"}" 
                          class="w-full max-w-xl h-auto rounded-xl shadow-md mx-auto object-cover" />
-                    <figcaption class="text-center text-sm text-gray-600 mt-2">${block.data.caption || ""
-            }</figcaption>
+                    <figcaption class="text-center text-sm text-gray-600 mt-2">${safeText(block.data.caption)}</figcaption>
                   </figure>`;
 
         case "raw":
           return block.data.html || "";
 
-        case "marker": // inline plugin → better handled via editor config, but fallback here
-          return `<mark>${block.data.text || ""}</mark>`;
+        case "marker":
+          return `<mark>${safeText(block.data.text)}</mark>`;
 
         case "underline":
-          return `<u>${block.data.text || ""}</u>`;
+          return `<u>${safeText(block.data.text)}</u>`;
 
         default:
           return "";
@@ -157,6 +171,8 @@ const staggerContainer = {
   initial: {},
   animate: { transition: { staggerChildren: 0.2 } },
 };
+
+
 
 const BlogPostPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -353,19 +369,21 @@ const BlogPostPage: React.FC = () => {
   if (error || !post) {
     return (
       <motion.section
-        className="py-16 bg-white text-center min-h-screen flex flex-col justify-center"
+        className="py-24 bg-white text-center min-h-[60vh] flex flex-col items-center justify-center"
         variants={fadeInUp}
         initial="initial"
         animate="animate"
       >
-        <h2 className="text-3xl font-bold text-gray-800 mb-2">Blog Post Not Found</h2>
-        <p className="text-gray-600 mb-6">{error || 'The requested blog post does not exist.'}</p>
+        <div className="bg-red-50 p-6 rounded-full mb-6">
+          <MessageSquare className="h-12 w-12 text-red-500 opacity-50" />
+        </div>
+        <h2 className="text-3xl font-bold text-gray-900 mb-2">Blog Post Not Found</h2>
+        <p className="text-gray-500 max-w-md mx-auto mb-8">{error || 'The requested blog post could not be located. It may have been moved or deleted.'}</p>
         <Link
           to="/blog"
-          className="inline-flex items-center gap-2 bg-gradient-to-r from-red-500 to-pink-500 text-white px-6 py-3 rounded-full hover:from-pink-500 hover:to-red-500 transition-all duration-300"
-          aria-label="Return to blog homepage"
+          className="inline-flex items-center gap-2 bg-black text-white px-8 py-3 rounded-full hover:bg-gray-800 transition-all duration-300 font-medium"
         >
-          Back to Blog
+          <ArrowLeft className="h-4 w-4" /> Return to Blog
         </Link>
       </motion.section>
     );
@@ -375,14 +393,6 @@ const BlogPostPage: React.FC = () => {
 
   return (
     <>
-      {/* Progress Bar */}
-      <div className="fixed top-0 left-0 w-full h-1 z-50 bg-gray-200">
-        <div
-          className="h-full bg-gradient-to-r from-red-500 to-pink-500 transition-all duration-200"
-          style={{ width: `${scrollProgress}%` }}
-        />
-      </div>
-
       <SEO
         title={`${post.title} | Freedom M&A Blog`}
         description={post.meta_description || post.excerpt}
@@ -391,227 +401,292 @@ const BlogPostPage: React.FC = () => {
         ogType="article"
       />
 
-      <section className="pb-10 bg-white">
-        <div className="container mx-auto max-w-5xl px-4">
+      <div className="fixed top-0 left-0 w-full h-1 z-50 bg-transparent">
+        <div
+          className="h-full bg-red-600 shadow-[0_0_10px_rgba(220,38,38,0.5)] transition-all duration-100 ease-out"
+          style={{ width: `${scrollProgress}%` }}
+        />
+      </div>
 
-          <Link
-            to="/blog"
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-red-500 mb-6"
-            aria-label="Go back to blog homepage"
-          >
-            <ArrowLeft className="h-4 w-4" /> Back to Blog
-          </Link>
+      <article className="bg-white min-h-screen">
+        {/* Hero Section */}
+        <section className="relative pt-32 pb-16 bg-gray-50/50">
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
 
-          <motion.h1
-            className="text-4xl font-bold text-gray-800 mb-4"
-            variants={fadeInUp}
-            initial="initial"
-            animate="animate"
-          >
-            {post.title}
-          </motion.h1>
+          <div className="container mx-auto max-w-4xl px-4 relative z-10 text-center">
+            <Link
+              to="/blog"
+              className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-red-600 mb-8 transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" /> Back to Articles
+            </Link>
 
+            <motion.div variants={fadeInUp} initial="initial" animate="animate">
+              {post.category && (
+                <span className="inline-block bg-red-100 text-red-600 text-xs font-bold tracking-wider uppercase px-3 py-1 rounded-full mb-6">
+                  {post.category}
+                </span>
+              )}
 
-          <img
-            src={post.image}
-            alt={`${post.title} - Blog cover`}
-            className="w-auto h-auto  object-fill  shadow-lg"
-          />
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight mb-6 tracking-tight">
+                {post.title}
+              </h1>
 
-          <motion.header variants={fadeInUp} initial="initial" animate="animate">
-            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mt-6 ">
-              <div className="flex items-center gap-1">
-                <Calendar className="h-4 w-4 text-red-500" />
-                {new Date(post.created_at).toLocaleDateString('en-US', {
-                  month: 'long',
-                  day: 'numeric',
-                  year: 'numeric',
-                })}
+              <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500 mb-10 font-medium">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden">
+                    <div className="w-full h-full bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center text-white font-bold text-xs">
+                      {post.author.charAt(0)}
+                    </div>
+                  </div>
+                  <span className="text-gray-900">{post.author}</span>
+                </div>
+                <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                <div className="flex items-center gap-1.5">
+                  <Calendar className="h-4 w-4" />
+                  {new Date(post.created_at).toLocaleDateString('en-US', {
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </div>
+                <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                <div className="flex items-center gap-1.5">
+                  <Clock className="h-4 w-4" />
+                  {post.read_time} min read
+                </div>
               </div>
-              <div className="flex items-center gap-1">
-                <Clock className="h-4 w-4 text-red-500" />
-                {post.read_time} min read
-              </div>
-              <div className="flex items-center gap-1">
-                <User className="h-4 w-4 text-red-500" />
-                {post.author}
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Featured Image */}
+        <div className="container mx-auto max-w-5xl px-4 -mt-8 relative z-20">
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="rounded-2xl overflow-hidden shadow-2xl ring-1 ring-gray-900/5 aspect-[21/9] bg-gray-100"
+          >
+            <img
+              src={post.image}
+              alt={post.title}
+              className="w-full h-full object-cover"
+            />
+          </motion.div>
+        </div>
+
+        <div className="container mx-auto max-w-7xl px-4 py-16">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12" ref={mainContentRef}>
+
+            {/* Left Sidebar (Share) */}
+            <div className="lg:col-span-1 hidden lg:block">
+              <div className="sticky top-32 flex flex-col gap-4 items-center">
+                <button onClick={handleLike} className="flex flex-col items-center gap-1 group w-full">
+                  <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-red-50 group-hover:text-red-500 transition-colors border border-gray-100">
+                    <Heart className={`h-5 w-5 ${likes > post.likes ? 'fill-red-500 text-red-500' : ''}`} />
+                  </div>
+                  <span className="text-xs font-medium text-gray-500">{likes}</span>
+                </button>
+
+                <button onClick={handleShare} className="flex flex-col items-center gap-1 group w-full">
+                  <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-500 transition-colors border border-gray-100">
+                    <Share2 className="h-5 w-5" />
+                  </div>
+                  <span className="text-xs font-medium text-gray-500">Share</span>
+                </button>
+
+                <a href="#comment-section" className="flex flex-col items-center gap-1 group w-full">
+                  <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-green-50 group-hover:text-green-500 transition-colors border border-gray-100">
+                    <MessageSquare className="h-5 w-5" />
+                  </div>
+                  <span className="text-xs font-medium text-gray-500">{comments.length}</span>
+                </a>
               </div>
             </div>
-          </motion.header>
 
-          <div
-            className="grid grid-cols-1 lg:grid-cols-3 gap-12 mt-10"
-            ref={mainContentRef}
-          >
-            {/* Main Content (Left Side) */}
-            <div className="lg:col-span-2 pr-0 lg:pr-8">
-              <motion.div variants={fadeInUp} initial="initial" animate="animate">
-                <article className="prose prose-lg max-w-none text-gray-700">
-                  <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
-                </article>
-                <div className="flex flex-wrap gap-3 mt-10">
+            {/* Main Content */}
+            <div className="lg:col-span-8 lg:px-8">
+              <motion.article
+                className="prose prose-lg prose-red max-w-none 
+                prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-gray-900 
+                prose-p:text-gray-600 prose-p:leading-8
+                prose-a:text-red-600 prose-a:no-underline hover:prose-a:underline
+                prose-img:rounded-xl prose-img:shadow-lg"
+                variants={fadeInUp}
+                initial="initial"
+                animate="animate"
+              >
+                {post.excerpt && (
+                  <p className="lead text-xl text-gray-600 font-medium mb-10 not-prose border-l-4 border-red-500 pl-6 italic">
+                    {post.excerpt}
+                  </p>
+                )}
+                <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
+              </motion.article>
+
+              {/* Tags */}
+              <div className="mt-16 pt-8 border-t border-gray-100">
+                <div className="flex flex-wrap gap-2">
                   {post.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="text-sm text-gray-600 bg-gray-100 py-1 px-4 rounded-full hover:bg-red-100 hover:text-red-500 transition-colors duration-300"
+                      className="text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 py-1.5 px-4 rounded-full transition-colors duration-200 cursor-default"
                     >
                       #{tag}
                     </span>
                   ))}
                 </div>
-                <div className="mt-10 flex items-center gap-8 border-t pt-8">
-                  <button
-                    onClick={handleLike}
-                    className="flex items-center gap-2 text-gray-600 hover:text-red-500 transition-colors"
-                  >
-                    <Heart className="h-5 w-5" /> {likes}
-                  </button>
-                  <button
-                    onClick={handleShare}
-                    className="flex items-center gap-2 text-gray-600 hover:text-red-500 transition-colors"
-                  >
-                    <Share2 className="h-5 w-5" /> {shares}
-                  </button>
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <MessageSquare className="h-5 w-5" /> {comments.length}
-                  </div>
-                </div>
-              </motion.div>
-            </div>
+              </div>
 
-            {/* Sidebar (Right Side) - Sticky */}
-            <aside className="lg:col-span-1 lg:sticky lg:top-24 h-fit space-y-8">
-              <motion.div
-                className="bg-white rounded-xl p-6 shadow-md border border-gray-200 mb-4"
-                variants={fadeInUp}
-                initial="initial"
-                animate="animate"
-              >
-                <h2 className="text-lg font-semibold text-gray-800 mb-4">About the Author</h2>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-r from-red-500 to-pink-500 flex items-center justify-center">
-                    <User className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-800">{post.author}</p>
-                    <p className="text-sm text-gray-600">{post.author_bio}</p>
-                  </div>
-                </div>
-              </motion.div>
+              {/* Mobile floating action bar */}
+              <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-white/80 backdrop-blur-md border border-gray-200 shadow-lg rounded-full px-6 py-3 flex items-center gap-8">
+                <button onClick={handleLike} className="flex items-center gap-2 text-gray-600 active:text-red-500">
+                  <Heart className={`h-5 w-5 ${likes > post.likes ? 'fill-red-500 text-red-500' : ''}`} />
+                  <span className="font-semibold">{likes}</span>
+                </button>
+                <div className="w-px h-4 bg-gray-300"></div>
+                <button onClick={handleShare} className="flex items-center gap-2 text-gray-600 active:text-blue-500">
+                  <Share2 className="h-5 w-5" />
+                </button>
+                <div className="w-px h-4 bg-gray-300"></div>
+                <a href="#comment-section" className="flex items-center gap-2 text-gray-600 active:text-green-500">
+                  <MessageSquare className="h-5 w-5" />
+                  <span className="font-semibold">{comments.length}</span>
+                </a>
+              </div>
 
-              <motion.div
-                id="comment-section"
-                className="bg-white rounded-xl p-6 shadow-md border border-gray-200"
-                variants={fadeInUp}
-                initial="initial"
-                animate="animate"
-              >
-                <h2 className="text-lg font-semibold text-gray-800 mb-4">Leave a Comment</h2>
-                <form className="space-y-4 mb-6" onSubmit={handleCommentSubmit}>
-                  <input
-                    type="text"
-                    name="name"
-                    value={commentForm.name}
-                    onChange={handleInputChange}
-                    placeholder="Your Name"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white"
-                  />
-                  <input
-                    type="email"
-                    name="email"
-                    value={commentForm.email}
-                    onChange={handleInputChange}
-                    placeholder="Your Email"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white"
-                  />
-                  <textarea
-                    name="content"
-                    value={commentForm.content}
-                    onChange={handleInputChange}
-                    placeholder="Your Comment"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white h-32"
-                  />
-                  {formError && <p className="text-sm text-red-500">{formError}</p>}
-                  <button
-                    type="submit"
-                    className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-6 py-3 rounded-lg flex items-center gap-2 hover:from-pink-500 hover:to-red-500 transition-all duration-300 w-full justify-center"
-                  >
-                    Submit <Send className="h-4 w-4" />
-                  </button>
-                </form>
-                <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                  Comments ({comments.length})
-                </h2>
-                {comments.length > 0 ? (
-                  <div className="space-y-6 max-h-96 overflow-y-auto pr-2">
-                    {comments.map((comment) => (
-                      <div key={comment.id} className="border-t pt-4">
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-red-500 to-pink-500 flex items-center justify-center">
-                            <User className="h-4 w-4 text-white" />
+              {/* Comments Section */}
+              <div id="comment-section" className="mt-16 pt-16 border-t border-gray-100">
+                <h3 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-2">
+                  Comments <span className="text-gray-400 font-normal text-lg">({comments.length})</span>
+                </h3>
+
+                {/* Comment Form */}
+                <div className="bg-gray-50 rounded-2xl p-6 sm:p-8 mb-12">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Leave a thoughtful comment</h4>
+                  <form onSubmit={handleCommentSubmit} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <input
+                        type="text"
+                        name="name"
+                        value={commentForm.name}
+                        onChange={handleInputChange}
+                        placeholder="Name"
+                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all"
+                      />
+                      <input
+                        type="email"
+                        name="email"
+                        value={commentForm.email}
+                        onChange={handleInputChange}
+                        placeholder="Email (optional)"
+                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all"
+                      />
+                    </div>
+                    <textarea
+                      name="content"
+                      value={commentForm.content}
+                      onChange={handleInputChange}
+                      placeholder="Share your thoughts..."
+                      className="w-full px-4 py-4 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all h-32 resize-y"
+                    />
+                    {formError && <p className="text-sm text-red-500 font-medium">{formError}</p>}
+                    <div className="flex justify-end">
+                      <button
+                        type="submit"
+                        className="px-6 py-3 bg-black text-white font-medium rounded-xl hover:bg-gray-800 transition-colors shadow-lg shadow-gray-200"
+                      >
+                        Post Comment
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
+                {/* Comments List */}
+                <div className="space-y-8">
+                  {comments.length > 0 ? (
+                    comments.map((comment) => (
+                      <div key={comment.id} className="group">
+                        <div className="flex gap-4">
+                          <div className="shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-500 font-bold border border-white shadow-sm">
+                            {comment.user_name ? comment.user_name.charAt(0).toUpperCase() : 'A'}
                           </div>
-                          <div>
-                            <p className="font-medium text-gray-800">
-                              {comment.user_name || 'Anonymous'}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {new Date(comment.created_at).toLocaleDateString()}
+                          <div className="flex-1 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <h5 className="font-semibold text-gray-900">{comment.user_name || 'Anonymous'}</h5>
+                              <span className="text-xs text-gray-400">{new Date(comment.created_at).toLocaleDateString()}</span>
+                            </div>
+                            <p className="text-gray-600 leading-relaxed text-sm bg-white p-4 rounded-r-xl rounded-bl-xl border border-gray-100 shadow-sm group-hover:shadow-md transition-shadow">
+                              {comment.content}
                             </p>
                           </div>
                         </div>
-                        <p className="text-sm text-gray-600">{comment.content}</p>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-600">No comments yet. Be the first!</p>
-                )}
-              </motion.div>
-            </aside>
-          </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-12 bg-white border-2 border-dashed border-gray-100 rounded-xl">
+                      <MessageSquare className="h-8 w-8 text-gray-300 mx-auto mb-3" />
+                      <p className="text-gray-500">No discussion yet. Be the first to share your thoughts!</p>
+                    </div>
+                  )}
+                </div>
 
-          {relatedPosts.length > 0 && (
-            <motion.section
-              className="mt-16"
-              variants={staggerContainer}
-              initial="initial"
-              animate="animate"
-            >
-              <h2 className="text-2xl font-semibold text-gray-800 mb-6">
-                Related Articles
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {relatedPosts.map((relatedPost) => (
-                  <motion.article
-                    key={relatedPost.id}
-                    className="group bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300"
-                    variants={fadeInUp}
-                  >
-                    <Link to={`/blog/${relatedPost.slug}`} aria-label={`Read ${relatedPost.title}`}>
-                      <img
-                        src={relatedPost.image}
-                        alt={`${relatedPost.title} - Related blog post`}
-                        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      <div className="p-5">
-                        <span className="text-xs font-medium text-red-500 mb-2 block">
-                          {relatedPost.category}
-                        </span>
-                        <h3 className="text-lg font-semibold text-gray-800 mb-2 group-hover:text-red-500 transition-colors">
-                          {relatedPost.title}
-                        </h3>
-                        <p className="text-sm text-gray-600 line-clamp-2">
-                          {relatedPost.excerpt}
-                        </p>
-                      </div>
-                    </Link>
-                  </motion.article>
-                ))}
               </div>
-            </motion.section>
-          )}
+            </div>
+
+            {/* Right Sidebar (Author & Related) */}
+            <div className="lg:col-span-3 space-y-8">
+              <div className="sticky top-32 space-y-8">
+
+                {/* Author Card */}
+                <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-6">About the Author</h3>
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-14 h-14 rounded-full bg-gray-900 flex items-center justify-center text-white font-bold text-xl">
+                      {post.author.charAt(0)}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-gray-900">{post.author}</h4>
+                      <p className="text-xs text-gray-500">Editor & Writer</p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600 leading-relaxed mb-6">
+                    {post.author_bio || "Passionate about technology and sharing knowledge through writing."}
+                  </p>
+                  <button className="w-full py-2.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                    View Profile
+                  </button>
+                </div>
+
+                {/* Related Posts Micro */}
+                {relatedPosts.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">More to Read</h3>
+                    <div className="space-y-4">
+                      {relatedPosts.map(p => (
+                        <Link key={p.id} to={`/blog/${p.slug}`} className="block group">
+                          <div className="flex gap-3">
+                            <img src={p.image} alt="" className="w-20 h-14 object-cover rounded-lg bg-gray-100" />
+                            <div>
+                              <h5 className="text-sm font-semibold text-gray-900 leading-tight group-hover:text-red-600 transition-colors line-clamp-2">
+                                {p.title}
+                              </h5>
+                              <span className="text-xs text-gray-400 mt-1 block">{p.read_time} min read</span>
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+              </div>
+            </div>
+
+          </div>
         </div>
-      </section>
+      </article>
     </>
   );
 };

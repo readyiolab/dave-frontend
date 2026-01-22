@@ -64,24 +64,37 @@ export default function NewsletterTable({ newsletters, page, pageSize, total, se
           <PaginationItem>
             <PaginationPrevious
               onClick={() => setPage(page > 1 ? page - 1 : 1)}
-              className="border-black text-black hover:bg-black hover:text-white"
+              className={`border-black text-black hover:bg-black hover:text-white cursor-pointer ${page === 1 ? 'pointer-events-none opacity-50' : ''}`}
             />
           </PaginationItem>
-          {[...Array(totalPages)].map((_, i) => (
-            <PaginationItem key={i}>
-              <PaginationLink
-                onClick={() => setPage(i + 1)}
-                isActive={page === i + 1}
-                className={page === i + 1 ? 'bg-black text-white' : 'border-black text-black hover:bg-black hover:text-white'}
-              >
-                {i + 1}
-              </PaginationLink>
-            </PaginationItem>
-          ))}
+          {[...Array(Math.min(5, totalPages))].map((_, i) => {
+            let pageNumber;
+            if (totalPages <= 5) {
+              pageNumber = i + 1;
+            } else if (page <= 3) {
+               pageNumber = i + 1;
+            } else if (page >= totalPages - 2) {
+              pageNumber = totalPages - 4 + i;
+            } else {
+              pageNumber = page - 2 + i;
+            }
+            
+            return (
+              <PaginationItem key={pageNumber}>
+                <PaginationLink
+                  onClick={() => setPage(pageNumber)}
+                  isActive={page === pageNumber}
+                  className={`cursor-pointer ${page === pageNumber ? 'bg-black text-white' : 'border-black text-black hover:bg-black hover:text-white'}`}
+                >
+                  {pageNumber}
+                </PaginationLink>
+              </PaginationItem>
+            );
+          })}
           <PaginationItem>
             <PaginationNext
               onClick={() => setPage(page < totalPages ? page + 1 : totalPages)}
-              className="border-black text-black hover:bg-black hover:text-white"
+              className={`border-black text-black hover:bg-black hover:text-white cursor-pointer ${page === totalPages ? 'pointer-events-none opacity-50' : ''}`}
             />
           </PaginationItem>
         </PaginationContent>

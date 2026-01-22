@@ -8,6 +8,10 @@ import LeadsTable from '../../components/admin/Leads/LeadsTable';
 import LeadDetails from '../../components/admin/Leads/LeadDetails';
 import { useSelector, useDispatch } from 'react-redux';
 import { setSelectedLead } from '../../components/store/slices/leadsSlice';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Search, Filter } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export default function LeadsPage() {
   const [page, setPage] = useState(1);
@@ -19,15 +23,24 @@ export default function LeadsPage() {
   // Control sheet open state based on selectedLead
   const isSheetOpen = selectedLead !== null;
   
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+
   const handleCloseSheet = () => {
     dispatch(setSelectedLead(null));
   };
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['leads', page],
+    queryKey: ['leads', page, searchTerm, statusFilter],
     queryFn: async () => {
       try {
-        const response = await api.get(`/leads?page=${page}&pageSize=${pageSize}`);
+        const params = new URLSearchParams({
+          page,
+          pageSize,
+          ...(searchTerm && { search: searchTerm }),
+          ...(statusFilter !== 'all' && { status: statusFilter })
+        });
+        const response = await api.get(`/leads?${params.toString()}`);
         console.log('Full API Response:', response);
         console.log('Response Data:', response.data);
         
@@ -158,19 +171,48 @@ export default function LeadsPage() {
   console.log('Total count:', total);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-4xl mx-auto space-y-6">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Leads Management</h1>
           <p className="text-sm sm:text-base text-gray-600 mt-1">View and manage your leads</p>
         </div>
         
         <Card className="shadow-sm border-gray-200">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold text-gray-900">All Leads</CardTitle>
-            <p className="text-sm text-gray-600">
-              Showing {((page - 1) * pageSize) + 1} to {Math.min(page * pageSize, total)} of {total} leads
-            </p>
+          <CardHeader className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 space-y-0 pb-4">
+            <div>
+              <CardTitle className="text-lg font-semibold text-gray-900">All Leads</CardTitle>
+              <p className="text-sm text-gray-600 mt-1">
+                Showing {((page - 1) * pageSize) + 1} to {Math.min(page * pageSize, total)} of {total} leads
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                <Input
+                  type="search"
+                  placeholder="Search leads..."
+                  className="pl-9 w-full bg-white"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full sm:w-40 bg-white">
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4" />
+                    <SelectValue placeholder="Status" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="new">New</SelectItem>
+                  <SelectItem value="contacted">Contacted</SelectItem>
+                  <SelectItem value="qualified">Qualified</SelectItem>
+                  <SelectItem value="closed">Closed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
           <CardContent>
             {leads.length === 0 ? (

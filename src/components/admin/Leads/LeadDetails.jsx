@@ -1,28 +1,40 @@
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { setInteractions } from '../../store/slices/leadsSlice';
 import { api } from '../../lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
-import { Mail, Phone, Tag, User, MessageSquare, Calendar, Hash } from 'lucide-react';
+import { Mail, Phone, Tag, User, MessageSquare, Calendar, Hash, ClipboardList, PenTool, Loader2 } from 'lucide-react';
 
 export default function LeadDetails() {
-  const { selectedLead, interactions } = useSelector((state) => state.leads);
+  const { selectedLead } = useSelector((state) => state.leads);
   const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const [notes, setNotes] = useState('');
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Fetch interactions using React Query for better loading state management
+  const { data: interactions = [], isLoading: isLoadingInteractions } = useQuery({
+    queryKey: ['interactions', selectedLead?.id],
+    queryFn: async () => {
+      if (!selectedLead?.id) return [];
+      const response = await api.get(`/leads/interactions/${selectedLead.id}`);
+      return response.data;
+    },
+    enabled: !!selectedLead?.id,
+  });
 
   const addInteractionMutation = useMutation({
     mutationFn: async (data) => {
       const response = await api.post('/leads/interaction', data);
       return response.data;
     },
-    onSuccess: (data) => {
-      dispatch(setInteractions([...interactions, data]));
+    onSuccess: () => {
+      queryClient.invalidateQueries(['interactions', selectedLead?.id]);
       setNotes('');
       toast({ title: 'Success', description: 'Interaction added' });
     },
@@ -43,8 +55,10 @@ export default function LeadDetails() {
         questions: ['How would you rate our service?', 'Would you recommend us?'] 
       });
     },
-    onSuccess: () =>
-      toast({ title: 'Success', description: 'Feedback survey sent' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['interactions', selectedLead?.id]);
+      toast({ title: 'Success', description: 'Feedback survey sent' });
+    },
     onError: (error) => {
       console.error('Send survey error:', error);
       toast({
@@ -60,7 +74,7 @@ export default function LeadDetails() {
       addInteractionMutation.mutate({ 
         leadId: selectedLead.id, 
         notes,
-        type: 'note' // Required field for the backend
+        type: 'note' 
       });
     }
   };
@@ -153,8 +167,8 @@ export default function LeadDetails() {
             </div>
           )}
 
-          {/* Actions */}
-          <div className="space-y-4">
+          {/* Actions - Removed Delete Button as per request */}
+          <div className="space-y-3">
             <Button
               onClick={() => sendSurveyMutation.mutate()}
               className="w-full bg-blue-600 text-white hover:bg-blue-700"
@@ -187,26 +201,53 @@ export default function LeadDetails() {
           {/* Interactions History */}
           <div className="border-t pt-4">
             <h3 className="text-sm font-semibold text-gray-900 mb-3">Interactions History</h3>
-            {interactions.length === 0 ? (
+            
+            {isLoadingInteractions ? (
+              <div className="flex justify-center py-6">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+              </div>
+            ) : interactions.length === 0 ? (
               <div className="text-center py-6 text-gray-500">
                 <MessageSquare className="h-8 w-8 mx-auto mb-2 text-gray-300" />
                 <p className="text-sm">No interactions yet</p>
               </div>
             ) : (
-              <div className="space-y-3 max-h-60 overflow-y-auto">
-                {interactions.map((interaction) => (
-                  <div key={interaction.id} className="bg-gray-50 rounded-lg p-3 border-l-4 border-blue-200">
-                    <div className="flex items-start gap-2">
-                      <MessageSquare className="h-4 w-4 text-blue-500 flex-shrink-0 mt-1" />
+              <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                {interactions.map((interaction, idx) => {
+                  const isSurvey = interaction.type === 'survey';
+                  const isChat = interaction.type === 'chat';
+                  
+                  let icon = <MessageSquare className="h-4 w-4 text-blue-500" />;
+                  let bgClass = "bg-blue-50 border-blue-200";
+                  let title = "Note";
+
+                  if (isSurvey) {
+                    icon = <ClipboardList className="h-4 w-4 text-purple-500" />;
+                    bgClass = "bg-purple-50 border-purple-200";
+                    title = "Feedback Survey";
+                  } else if (isChat) {
+                    icon = <MessageSquare className="h-4 w-4 text-green-500" />;
+                     bgClass = "bg-green-50 border-green-200";
+                     title = "AI Chat";
+                  }
+
+                  return (
+                  <div key={interaction.id || idx} className={`rounded-lg p-3 border-l-4 ${bgClass}`}>
+                    <div className="flex items-start gap-3">
+                      <div className="mt-1 flex-shrink-0">{icon}</div>
                       <div className="flex-1">
-                        <p className="text-xs text-gray-500 mb-1">
-                          {formatDate(interaction.created_at)}
-                        </p>
-                        <p className="text-sm text-gray-700">{interaction.notes}</p>
+                        <div className="flex justify-between items-start">
+                          <span className="text-xs font-semibold text-gray-700 uppercase tracking-wider">{title}</span>
+                          <span className="text-xs text-gray-500 ml-2">
+                            {formatDate(interaction.created_at)}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-700 mt-1 whitespace-pre-wrap">{interaction.notes}</p>
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

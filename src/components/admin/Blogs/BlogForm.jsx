@@ -12,8 +12,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { Save, FileText, User, Settings, Tags, Image, Clock, Star } from "lucide-react";
-import Editor from "../../Editor/Editor";
 import { Toaster } from "sonner";
+const Editor = React.lazy(() => import("../../Editor/Editor"));
 
 export default function BlogForm({ onClose, blog }) {
   // Handle null/undefined blog prop
@@ -38,6 +38,8 @@ export default function BlogForm({ onClose, blog }) {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState({});
+  const errorRefs = React.useRef({});
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -147,14 +149,23 @@ export default function BlogForm({ onClose, blog }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.title || !formData.slug) {
-      toast({
-        title: "Error",
-        description: "Title and slug are required",
-        variant: "destructive",
-      });
+    const newErrors = {};
+    if (!formData.title) newErrors.title = "Title is required";
+    if (!formData.slug) newErrors.slug = "Slug is required";
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      // Scroll to first error
+      const firstErrorField = Object.keys(newErrors)[0];
+      if (errorRefs.current[firstErrorField]) {
+        errorRefs.current[firstErrorField].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        errorRefs.current[firstErrorField].focus();
+      }
       return;
     }
+    
+    // Clear errors if validation passes
+    setErrors({});
 
     setIsSubmitting(true);
     try {
@@ -237,12 +248,17 @@ export default function BlogForm({ onClose, blog }) {
                 </Label>
                 <Input
                   id="title"
+                  ref={(el) => (errorRefs.current.title = el)}
                   value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, title: e.target.value });
+                    if (errors.title) setErrors({ ...errors, title: null });
+                  }}
                   placeholder="Enter blog post title"
-                  className="mt-1"
+                  className={`mt-1 ${errors.title ? "border-red-500" : ""}`}
                   required
                 />
+                {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
               </div>
 
               <div className="md:col-span-2">
@@ -251,12 +267,17 @@ export default function BlogForm({ onClose, blog }) {
                 </Label>
                 <Input
                   id="slug"
+                  ref={(el) => (errorRefs.current.slug = el)}
                   value={formData.slug}
-                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, slug: e.target.value });
+                    if (errors.slug) setErrors({ ...errors, slug: null });
+                  }}
                   placeholder="blog-post-slug"
-                  className="mt-1"
+                  className={`mt-1 ${errors.slug ? "border-red-500" : ""}`}
                   required
                 />
+                {errors.slug && <p className="text-red-500 text-sm mt-1">{errors.slug}</p>}
                 <p className="text-xs text-gray-500 mt-1">
                   {blogData.id ? 'Edit the slug if needed' : 'Automatically generated from title, but you can edit it'}
                 </p>
@@ -379,13 +400,15 @@ export default function BlogForm({ onClose, blog }) {
           </CardHeader>
           <CardContent>
             <div className="border rounded-lg p-2 min-h-[300px]">
-              <Editor
-                key={blogData.id || 'new-blog'}
-                data={formData.content}
-                onChange={handleEditorChange}
-                onImageUpload={handleImageUpload}
-                holder={`blog-editor-${blogData.id || 'new'}`}
-              />
+              <React.Suspense fallback={<div className="p-4 flex items-center justify-center">Loading editor...</div>}>
+                <Editor
+                  key={blogData.id || 'new-blog'}
+                  data={formData.content}
+                  onChange={handleEditorChange}
+                  onImageUpload={handleImageUpload}
+                  holder={`blog-editor-${blogData.id || 'new'}`}
+                />
+              </React.Suspense>
             </div>
           </CardContent>
         </Card>
