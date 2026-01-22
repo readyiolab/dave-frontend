@@ -49,7 +49,7 @@ const Chatbot = () => {
         return [' Yes, correct', ' Change details'];
       case 'booking_time':
         // Generate dynamic date suggestions for the next few days
-        const suggestions = ['Show slots', 'Tomorrow 10am', 'Next Monday'];
+        const suggestions = ['Tomorrow 10am', 'Next Monday'];
         const today = new Date();
         for (let i = 2; i <= 4; i++) {
           const nextDate = new Date(today);
@@ -582,6 +582,7 @@ const Chatbot = () => {
             datePreference: bookingData.datePreference, // Send parsed date preference if any
             name: bookingData.name,
             email: bookingData.email,
+            userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
             sessionId,
           });
 
@@ -611,12 +612,12 @@ const Chatbot = () => {
             }
 
             if (result.showSlots && (!result.slots || result.slots.length === 0)) {
-              // No slots available
+              // No slots available - stay in booking mode and suggest alternatives
               setMessages((prev) => [
                 ...prev,
                 {
                   role: "bot",
-                  content: result.message || "No available slots found. Please try the booking link.",
+                  content: result.message + "\n\nOr you can try a different day - just tell me when works for you!",
                   timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
                   contactInfo: {
                     email: "info@freedommergers.com",
@@ -625,6 +626,7 @@ const Chatbot = () => {
                   },
                 },
               ]);
+              // Stay in booking_time mode so user can try another day
               setIsLoading(false);
               return;
             }
@@ -701,9 +703,7 @@ const Chatbot = () => {
                   },
                 },
               ]);
-              // Reset and go back to normal
-              setConversationMode('normal');
-              setBookingData({ name: "", email: "", phone: "", timePreference: "", datePreference: "", suggestedTime: null, alternatives: [] });
+              // Stay in booking mode
             }
           } else {
             // Handle specific failure reasons
@@ -739,12 +739,12 @@ const Chatbot = () => {
               return;
             }
 
-            // General API error or other failure
+            // General API error or other failure - stay in booking mode, let user try again
             setMessages((prev) => [
               ...prev,
               {
                 role: "bot",
-                content: result.message || "Sorry, I couldn't find available times, but you can check the full calendar here:",
+                content: (result.message || "Sorry, I couldn't find available times.") + "\n\nYou can try a different day - just tell me when works for you, or use the calendar link:",
                 timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
                 contactInfo: {
                   email: "info@freedommergers.com",
@@ -753,9 +753,7 @@ const Chatbot = () => {
                 },
               },
             ]);
-            // Reset and go back to normal
-            setConversationMode('normal');
-            setBookingData({ name: "", email: "", phone: "", timePreference: "", datePreference: "", suggestedTime: null, alternatives: [] });
+            // Stay in booking_time mode - don't reset!
           }
         } catch (error) {
           console.error("Availability check error:", error);
@@ -763,7 +761,7 @@ const Chatbot = () => {
             ...prev,
             {
               role: "bot",
-              content: "I'm having trouble checking availability. Would you like to try another time, or book directly?",
+              content: `No worries, ${bookingData.name}! Just tell me another day/time that works for you, or use the booking link:`,
               timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
               contactInfo: {
                 email: "info@freedommergers.com",
@@ -772,6 +770,7 @@ const Chatbot = () => {
               },
             },
           ]);
+          // Stay in booking_time mode - don't reset!
         }
         setIsLoading(false);
         return;
@@ -795,8 +794,13 @@ const Chatbot = () => {
           }
         }
 
-        if (response === 'yes' || response === 'confirm' || response === 'book' || response === 'ok' || selectedAlternative) {
+        if (response === 'yes' || response.includes('yes, book') || response === 'book it' || response.includes('book it') || response === 'confirm' || response === 'book' || response === 'ok' || selectedAlternative) {
           // Confirm and book
+          // If user said "Yes" but didn't pick a number, and we have alternatives, pick the first one
+          if (!selectedAlternative && bookingData.alternatives && bookingData.alternatives.length > 0) {
+            selectedAlternative = bookingData.alternatives[0];
+          }
+
           const timeToBook = selectedAlternative || bookingData.suggestedTime;
 
           if (!timeToBook) {
@@ -1016,7 +1020,7 @@ const Chatbot = () => {
                   ...prev,
                   {
                     role: "bot",
-                    content: result.message || "Sorry, I couldn't find available times, but you can check the full calendar here:",
+                    content: (result.message || "Sorry, I couldn't find available times.") + `\n\nNo problem, ${bookingData.name}! Just tell me another day/time, or use the booking link:`,
                     timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
                     contactInfo: {
                       email: "info@freedommergers.com",
@@ -1025,8 +1029,8 @@ const Chatbot = () => {
                     },
                   },
                 ]);
-                setConversationMode('normal');
-                setBookingData({ name: "", email: "", phone: "", timePreference: "", datePreference: "", suggestedTime: null, alternatives: [] });
+                // Stay in booking_time mode - don't reset!
+                setConversationMode('booking_time');
               }
             }
           } catch (error) {
@@ -1035,7 +1039,7 @@ const Chatbot = () => {
               ...prev,
               {
                 role: "bot",
-                content: "I'm having trouble checking availability. Would you like to try another time, or book directly?",
+                content: `No worries, ${bookingData.name}! Just tell me another day/time that works for you:`,
                 timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
                 contactInfo: {
                   email: "info@freedommergers.com",
@@ -1044,6 +1048,8 @@ const Chatbot = () => {
                 },
               },
             ]);
+            // Stay in booking_time mode
+            setConversationMode('booking_time');
           }
           setIsLoading(false);
           return;
