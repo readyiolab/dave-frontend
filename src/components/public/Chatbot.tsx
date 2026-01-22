@@ -49,7 +49,7 @@ const Chatbot = () => {
         return [' Yes, correct', ' Change details'];
       case 'booking_time':
         // Generate dynamic date suggestions for the next few days
-        const suggestions = ['Tomorrow 10am', 'Next Monday'];
+        const suggestions = [];
         const today = new Date();
         for (let i = 2; i <= 4; i++) {
           const nextDate = new Date(today);
