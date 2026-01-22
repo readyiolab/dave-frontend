@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '../../hooks/useAuth';
@@ -8,14 +9,15 @@ import { useAuth } from '../../hooks/useAuth';
 export default function Login() {
   const [email, setEmail] = useState('');   // ✅ email instead of username
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const { handleLogin, loading } = useAuth();
   const { toast } = useToast();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Submitting login form with:', { email });
+    console.log('Submitting login form with:', { email, rememberMe });
     try {
-      await handleLogin({ email, password }); // ✅ backend expects email
+      await handleLogin({ email, password, rememberMe }); // ✅ backend expects email
       toast({ title: 'Success', description: 'Logged in successfully!' });
     } catch (err) {
       toast({
@@ -50,6 +52,20 @@ export default function Login() {
               required
               className="border-black text-black placeholder-gray-500"
             />
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="remember" 
+                checked={rememberMe} 
+                onCheckedChange={setRememberMe}
+                className="border-black data-[state=checked]:bg-black data-[state=checked]:text-white"
+              />
+              <label
+                htmlFor="remember"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-black"
+              >
+                Remember me
+              </label>
+            </div>
             <Button
               type="submit"
               disabled={loading}

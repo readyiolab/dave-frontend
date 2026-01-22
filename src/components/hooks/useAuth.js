@@ -8,27 +8,79 @@ export function useAuth() {
   const { isAuthenticated, accessToken, user } = useSelector((state) => state.auth);
   const [loading, setLoading] = useState(false);
 
-  // Initialize from localStorage
+  // Initialize from localStorage or sessionStorage
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    const storedUser = localStorage.getItem('user');
+    const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
+    const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
+
     if (token) {
       api.setAuthToken(token);
       const userData = storedUser ? JSON.parse(storedUser) : null;
       dispatch(login({ accessToken: token, user: userData }));
+      setupAutoLogout(token);
     }
   }, [dispatch]);
+
+  // Setup 401 interceptor
+  useEffect(() => {
+    const interceptor = api.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.status === 401) {
+          handleLogout();
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    return () => {
+      api.interceptors.response.eject(interceptor);
+    };
+  }, []); // Only runs once on mount
+
+  // Helper to decode JWT and set auto-logout timer
+  const setupAutoLogout = (token) => {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const expiryTime = payload.exp * 1000;
+      const currentTime = Date.now();
+      const timeUntilExpiry = expiryTime - currentTime;
+
+      if (timeUntilExpiry > 0) {
+        setTimeout(() => {
+          handleLogout();
+        }, timeUntilExpiry);
+      } else {
+        handleLogout();
+      }
+    } catch (error) {
+      console.error('Error decoding token:', error);
+      handleLogout();
+    }
+  };
 
   // --- LOGIN ---
   async function handleLogin(credentials) {
     setLoading(true);
     try {
-      const response = await api.post('/auth/login', credentials);
+      const { email, password, rememberMe } = credentials; // Extract rememberMe
+      const response = await api.post('/auth/login', { email, password });
       const { accessToken, user } = response.data;
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('user', JSON.stringify(user));
+
+      const storage = rememberMe ? localStorage : sessionStorage;
+
+      // Clear both first to avoid duplicates/stale state
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('user');
+      sessionStorage.removeItem('accessToken');
+      sessionStorage.removeItem('user');
+
+      storage.setItem('accessToken', accessToken);
+      storage.setItem('user', JSON.stringify(user));
+
       api.setAuthToken(accessToken);
       dispatch(login({ accessToken, user }));
+      setupAutoLogout(accessToken);
     } catch (err) {
       throw new Error(err.response?.data?.error || 'Login failed');
     } finally {
@@ -41,9 +93,17 @@ export function useAuth() {
     try {
       const response = await api.post('/auth/refresh-token');
       const { accessToken } = response.data;
-      localStorage.setItem('accessToken', accessToken);
+
+      // Update token in whichever storage it exists
+      if (localStorage.getItem('accessToken')) {
+        localStorage.setItem('accessToken', accessToken);
+      } else {
+        sessionStorage.setItem('accessToken', accessToken);
+      }
+
       api.setAuthToken(accessToken);
       dispatch(refreshToken({ accessToken }));
+      setupAutoLogout(accessToken);
     } catch (err) {
       handleLogout();
     }
@@ -53,6 +113,8 @@ export function useAuth() {
   async function handleLogout() {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('user');
+    sessionStorage.removeItem('accessToken');
+    sessionStorage.removeItem('user');
     api.setAuthToken(null);
     dispatch(logout());
   }
