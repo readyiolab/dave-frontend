@@ -29,6 +29,7 @@ const EmailCampaignsPage = lazy(() => import("./pages/admin/EmailCampaignsPage")
 const VoiceCallsPage = lazy(() => import("./pages/admin/VoiceCallsPage"));
 const ChatPage = lazy(() => import("./pages/admin/ChatPage"));
 const MetricsPage = lazy(() => import("./pages/admin/MetricsPage"));
+const ResetPasswordPage = lazy(() => import("./pages/admin/ResetPasswordPage"));
 const UnsubscribePage = lazy(() => import("./pages/public/UnsubscribePage"));
 const NotFound = lazy(() => import("./components/public/NotFound"));
 
@@ -82,6 +83,7 @@ export default function App() {
               <Route path="voice-calls" element={<VoiceCallsPage />} />
               <Route path="chat" element={<ChatPage />} />
               <Route path="metrics" element={<MetricsPage />} />
+              <Route path="reset-password" element={<ResetPasswordPage />} />
             </Route>
             <Route element={<PublicLayout />}>
               <Route path="/" element={<Home />} />

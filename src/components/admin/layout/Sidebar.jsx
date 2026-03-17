@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, FileText, MessageSquare, Mail, Calendar, BarChart, X, Menu, Phone } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, MessageSquare, Mail, Calendar, BarChart, X, Menu, Phone, Key } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { Button } from '@/components/ui/button';
 
@@ -19,6 +19,7 @@ export default function Sidebar({ isSidebarOpen, setIsSidebarOpen }) {
     // { path: '/admin/appointments', label: 'Appointments', icon: <Calendar className="w-5 h-5" /> },
     {path : '/admin/contacts', label: 'Contact', icon: <Phone className="w-5 h-5" /> },
     // { path: '/admin/metrics', label: 'Metrics', icon: <BarChart className="w-5 h-5" /> },
+    { path: '/admin/reset-password', label: 'Reset Password', icon: <Key className="w-5 h-5" /> },
   ];
 
   const toggleSidebar = () => {
